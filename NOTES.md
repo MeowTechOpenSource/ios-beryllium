@@ -1,5 +1,11 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## POCO USERLAND CONFIRMED — 2026-10-21
+
+- User reports corrected0083 boot advanced to Skywalk, then explicitly reports "POCO test init: still alive". This is the known static test program's heartbeat, proving its userland execution and select timeout wakeups on Poco. Bootloader send/boot were bothOKAY17.847s/0.073s. No Apple launchd/SpringBoard evidence yet; do not label static program iOS success.
+- Next: prepare Apple HFS root locally using downloaded16.7.16 images. Source images mount read-only natively on macOS. Need port/review SDM845 storage path before any real UFS usage; sweet-ufs remains absent/disabled. No phone storage writes/erase authorized. Full root will not fit current approved255MiB kernel window, so do not blindly RAM-load it or reuse upstream userdata instructions.
+
+
 ## POCO CPU-MATCH TEST / APPLE FILES PREPARED — 2026-10-21
 
 - CI39627940583 succeeded from0881fa1f9a01eafb3a9a58351e521776b374e7f2, metadata targetberyllium verified. Kernel xnu/out-beryllium-0083 SHA256308bbff59d7ce46f2ed4c5c03d26209894ea377565216e6dfd7cd6c13eeb89d4 matches artifact. Added startup_debug=1 to same visible.adt + mockfs PID1 test. Guard(UBSAN), embedded payload and image SHA checked. New boot-init-0083.img SHA256a920b03948b5a89a68c00944dfa85e4f5c90132e15732e78a845da4ce851e0df. User returned fastboot; product/unlocked verified; temporary boot started. Await actual screen result.
