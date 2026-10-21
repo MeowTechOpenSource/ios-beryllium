@@ -1,5 +1,16 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## ACTIVE POCO HANDOFF — 2026-10-21
+
+- User confirmed diagnostic CPU values: MPIDR=0x81000000, MMFR0=0x101122 (16K supported), CNTFRQ=19200000, EL1, RESULT diagnostic reached.
+- User explicitly approved RAM test/use of 0x140000000–0x150000000. Temporary probe f023fa2443e4187a1237f906cfb427413d675473669134154acb125f91c269d5 launched; user confirmed all five sample restored OK, RAM five samples passed, RESULT diagnostic reached. Samples only, not exhaustive RAM validation.
+- User approved public source/non-unique notes publication. Commit65a74a0 pushed to MeowTechOpenSource/ios-beryllium:poco-bringup; fork default branch set there. GH auth works outside sandbox.
+- Poco framebuffer overlay kernel CI39624916896 succeeded: hardware_target=beryllium, source_commit=65a74a030dd1ebbedc1e10a0bd1ccd8a8eda2ee2. Artifact xnu/out-beryllium-0082/kernel.development.sweet SHA256 053a8a96c7a71eef6829da38d278e81407b93d3ebf82f26ece16722ea1fd098a matches artifact checksum.
+- Implemented target ADT: one CPU, verified GIC/timer/PSCI, 255MiB kernel RAM plus 1MiB panic reserve in approved window; sweet-ufs node removed. Added pre-copy payload bounds validation and target framebuffer loader. Seven C/UBSAN bounds tests pass, real kernel payload passes guard; RAM diagnostic ARM64 emulator tests previously passed.
+- Temporary XNU image shim/out/beryllium-xnu/boot-gzip.img:17100800 bytes, SHA256 5dc972b33c3c48cc336edfd19ca7c45b4cf0254bd0cd9f609148c25e6010836b. Actual packed Image/FDT/payload and Android digest checked. No root filesystem; cpus=1, sweettouch=0 sweetkeys=0 sweetusb=0, rd=md0. Kernel-entry test only, not iOS userland.
+- Reverified fastboot beryllium/unlocked=yes, temporarily launched image: Sending16700KB OKAY, Booting OKAY, exit0. Awaiting user screen text/bands. No flash or erase. Do not claim XNU execution before screen evidence. Next: diagnose screen evidence, then RAM-root init test and later actual iOS root/UI port. Destructive storage approval still absent.
+
+
 ## CUSTOM CODE RUNNING ON POCO — 2026-10-21, latest
 
 - Authorized ADB returned; rebooted to bootloader, reverified beryllium/unlocked=yes, then fastboot boot of early-marker gzip candidate 8c6602044b98baa5d8c7c76a6091df50d27ae86c6e5e947de5f202c5e760d55b. Send480KB OKAY, Booting OKAY, exit0.

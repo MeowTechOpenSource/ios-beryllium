@@ -1,7 +1,11 @@
 #pragma once
 #include <stdint.h>
 
-#ifdef BERYLLIUM_DIAGNOSTIC
+#if defined(BERYLLIUM_XNU)
+#define FB_BASE          0x9d400000UL
+#define FB_W             1080
+#define FB_H             2246
+#elif defined(BERYLLIUM_DIAGNOSTIC)
 /* Geometry only; diagnostic code obtains the address from the live FDT. */
 #define FB_BASE          0UL
 #define FB_W             1080

@@ -12,7 +12,7 @@ import struct
 import zlib
 
 
-def pack(stock, image, dtb, compress_kernel=False):
+def pack(stock, image, dtb, compress_kernel=False, payload=None):
     if len(stock) < 4096 or stock[:8] != b'ANDROID!':
         raise ValueError('Invalid stock boot image')
     page, version = struct.unpack_from('<II', stock, 36)
@@ -42,6 +42,10 @@ def pack(stock, image, dtb, compress_kernel=False):
     archive = b'070701' + b''.join(f'{x:08x}'.encode() for x in fields) + b'TRAILER!!!\0'
     archive += bytes(-len(archive) % 512)
     ramdisk = gzip.compress(archive, mtime=0)
+    if payload is not None:
+        if len(payload) < 0x2a8 or payload[:8] != b'SWEETXNU':
+            raise ValueError('Invalid XNU payload header')
+        ramdisk = payload
     header = bytearray(stock[:page])
     struct.pack_into('<I', header, 8, len(kernel))
     struct.pack_into('<I', header, 16, len(ramdisk))
@@ -63,8 +67,10 @@ def main():
     parser.add_argument('--image', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--gzip-kernel', action='store_true', help='Match the gzip(Image)+DTB pattern of this phone and UniXNU')
+    parser.add_argument('--payload', type=Path, help='Validated SWEETXNU payload as the ABL ramdisk')
     args = parser.parse_args()
-    result = pack(args.stock_boot.read_bytes(), args.image.read_bytes(), args.live_dtb.read_bytes(), args.gzip_kernel)
+    result = pack(args.stock_boot.read_bytes(), args.image.read_bytes(), args.live_dtb.read_bytes(), args.gzip_kernel,
+                  args.payload.read_bytes() if args.payload else None)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(result)
     args.out.chmod(0o600)

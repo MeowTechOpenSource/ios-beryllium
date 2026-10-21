@@ -12,21 +12,7 @@
 #include "fdt.h"
 #include "loader.h"
 
-#define BOOT_LINE_LENGTH	608
-#define PAGE_16K		0x4000UL
-
-struct payload_seg {
-	uint64_t vmaddr, vmsize, file_off, file_size;
-};
-
-struct payload {
-	char magic[8];
-	uint32_t version, nsegs;
-	uint64_t virt_base, entry_va, adt_off, adt_size, kernel_end;
-	uint64_t phys_base, mem_size;
-	char cmdline[BOOT_LINE_LENGTH];
-	struct payload_seg segs[];
-};
+#define PAGE_16K 0x4000UL
 
 /* pexpert/pexpert/arm64/boot.h, Revision/Version 2 */
 struct boot_video {
@@ -86,6 +72,11 @@ const char *loader_boot(uintptr_t dtb)
 	con_hex2("INITRD", "lo=", rd_start, "hi=", rd_end);
 
 	const struct payload *p = (const struct payload *)rd_start;
+#if defined(BERYLLIUM_XNU)
+    if (rd_end <= rd_start) return "invalid initrd span";
+    const char *invalid = beryllium_payload_check(p, rd_end - rd_start, rd_start);
+    if (invalid) return invalid;
+#endif
 	if (!magic_ok(p->magic))
 		return "no SWEETXNU payload";
 	if (p->version != 1 || (p->adt_off & 7) || (rd_start & 7))

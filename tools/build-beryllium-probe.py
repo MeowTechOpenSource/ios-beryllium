@@ -16,9 +16,13 @@ import sys
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--early-marker', action='store_true', help='Use the framebuffer reservation verified on this specific Poco before FDT validation')
+    parser.add_argument('--ram-probe', action='store_true', help='Test and restore words in the verified Poco XNU RAM window')
+    parser.add_argument('--xnu', action='store_true', help='Link the bounded Poco XNU loader; requires a separate validated payload')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    out = root / ('shim/out/beryllium-probe-early' if args.early_marker else 'shim/out/beryllium-probe')
+    out = root / ('shim/out/beryllium-probe-ram' if args.ram_probe else ('shim/out/beryllium-probe-early' if args.early_marker else 'shim/out/beryllium-probe'))
+    if args.xnu:
+        out = root / 'shim/out/beryllium-xnu'
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, ZIG_GLOBAL_CACHE_DIR=str(out / 'zig-cache'))
     command = [sys.executable, '-m', 'ziglang']
@@ -28,8 +32,13 @@ def main():
              '-DBERYLLIUM_DIAGNOSTIC']
     if args.early_marker:
         flags.append('-DBERYLLIUM_EARLY_MARKER')
+    if args.ram_probe:
+        flags.append('-DBERYLLIUM_RAM_PROBE')
     sources = ['start.S', 'console.c', 'beryllium_fdt.c', 'beryllium_probe.c']
     objects = []
+    if args.xnu:
+        flags.append('-DBERYLLIUM_XNU')
+        sources += ['loader.c', 'fdt.c', 'beryllium_payload.c']
     for source in sources:
         obj = out / (Path(source).stem + '.o')
         subprocess.run(command + ['cc'] + flags + ['-c', str(root / 'shim' / source),

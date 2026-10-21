@@ -2,6 +2,9 @@
  * Device/geometry validation must succeed before touching the framebuffer. */
 #include "console.h"
 #include "beryllium_fdt.h"
+#ifdef BERYLLIUM_XNU
+#include "loader.h"
+#endif
 
 static int framebuffer_ready;
 /* Debugger-visible outcome: 0 = rejected/incomplete, 1 = reached, 2 = fault. */
@@ -40,6 +43,30 @@ void exc_handler(uint64_t slot, uint64_t *regs)
     }
     halt();
 }
+#ifdef BERYLLIUM_RAM_PROBE
+/* Selected only after host validation of this phone's live memory map.
+ * Touch two words at each sample, then restore them before continuing.
+ * This does not prove the entire window is free of firmware protections. */
+static int probe_ram(void)
+{
+    for (unsigned i = 0; i < 5; i++) {
+        uint64_t address = i == 4 ? 0x14fffc000ULL : 0x140000000ULL + (uint64_t)i * 0x4000000;
+        volatile uint64_t *p = (volatile uint64_t *)(uintptr_t)address;
+        con_hex("RAM TEST", address);
+        uint64_t a = p[0], b = p[1];
+        p[0] = 0x55aa33cccc33aa55ULL;
+        p[1] = 0xaa55cc3333cc55aaULL;
+        __asm__ volatile("dsb sy" ::: "memory");
+        int ok = p[0] == 0x55aa33cccc33aa55ULL && p[1] == 0xaa55cc3333cc55aaULL;
+        p[0] = a; p[1] = b;
+        __asm__ volatile("dsb sy" ::: "memory");
+        ok = ok && p[0] == a && p[1] == b;
+        con_str("RAM", ok ? "sample restored OK" : "sample failed");
+        if (!ok) return 0;
+    }
+    return 1;
+}
+#endif
 void shim_main(uint64_t dtb)
 {
     struct beryllium_fb fb;
@@ -76,8 +103,17 @@ void shim_main(uint64_t dtb)
     __asm__ volatile("mrs %0, CurrentEL" : "=r"(el));
     con_hex("MPIDR", mpidr); con_hex("MMFR0", mmfr0);
     con_hex("CNTFRQ", freq); con_hex("EL", el >> 2);
+#ifdef BERYLLIUM_RAM_PROBE
+    if (!probe_ram()) { beryllium_probe_result = 3; halt(); }
+    con_str("RAM", "five samples passed");
+#endif
     con_str("RESULT", "diagnostic reached");
     con_str("NEXT", "XNU not started yet");
     beryllium_probe_result = 1;
+#ifdef BERYLLIUM_XNU
+    con_str("XNU", "validating payload");
+    const char *why = loader_boot(dtb);
+    con_str("LOADER", why);
+#endif
     halt();
 }

@@ -18,6 +18,7 @@ from unicorn.arm64_const import UC_ARM64_REG_PC, UC_ARM64_REG_X0
 ROOT = Path(__file__).resolve().parents[1]
 PROBE_DIR = Path(os.environ.get('BERYLLIUM_PROBE_DIR', str(ROOT / 'shim/out/beryllium-probe')))
 EARLY = os.environ.get('BERYLLIUM_EARLY_MARKER') == '1'
+RAM = os.environ.get('BERYLLIUM_RAM_PROBE') == '1'
 spec = importlib.util.spec_from_file_location('fdt_fixtures', ROOT / 'tools/test-beryllium-fdt.py')
 fixtures = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixtures)
@@ -53,6 +54,11 @@ def execute(load, device, blob=None):
     blob = blob if blob is not None else fixtures.fixture(device=device)
     uc.mem_map(DTB, (len(blob) + 4095) & ~4095)
     uc.mem_write(DTB, blob)
+    samples = [0x140000000, 0x144000000, 0x148000000, 0x14c000000, 0x14fffc000] if RAM else []
+    original = struct.pack('<QQ', 0x123456789abcdef0, 0x0fedcba987654321)
+    for address in samples:
+        uc.mem_map(address, 4096)
+        uc.mem_write(address, original)
     uc.mem_map(FB, FB_SIZE)
     uc.reg_write(UC_ARM64_REG_X0, DTB)
     reached_halt = []
@@ -72,6 +78,9 @@ def execute(load, device, blob=None):
     expected = 1 if device == 'xiaomi,beryllium' else 0
     if outcome != expected:
         raise AssertionError(f'Diagnostic outcome {outcome}, expected {expected}')
+    for address in samples:
+        if bytes(uc.mem_read(address, 16)) != original:
+            raise AssertionError('RAM sample was not restored')
     return bytes(uc.mem_read(FB, 4320 * 2246))
 
 
