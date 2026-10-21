@@ -67,3 +67,9 @@ It loads the compiled Image at two different addresses and supplies synthetic va
 6. Port XNU memory/interrupt/CPU/storage/input support; only then attempt userland.
 
 A local temporary diagnostic boot image is now packaged; it has not been booted on hardware. There are no automated fastboot or flashing commands in these tools. Upstream userdata installation is destructive; upstream author approvals are not approvals for this Poco. No erase or explicit partition-write command has been issued; recovery automatic mounts are documented above.
+
+## UniXNU reference
+
+UniXNU source at 97de9e715e06d77b8ebe7b80f6e556ee7ab9a7e9 uses a UEFI/GOP-based loader chain. Its public supported-device list does not provide a Poco F1 port. Porting the whole stack would require Poco-specific UEFI, platform and driver work.
+
+The immediately relevant finding is packaging: scripts/unixnu/bootimg.py uses gzip(payload)+DTB with round-trip checks. The actual Poco Android boot image and working temporary TWRP also contain gzip kernels; the first custom probe used a raw Image. That difference is not proven causal. The packer now offers --gzip-kernel to change compression while preserving the backed-up phone's header-v1 offsets. The new boot-gzip.img candidate has not been sent. Compressed bytes, uncompressed Image, appended FDT and Android header digest have been verified.

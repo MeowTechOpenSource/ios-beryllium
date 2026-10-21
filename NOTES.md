@@ -1,5 +1,11 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## UniXNU comparison — 2026-10-21, latest
+
+- User requested UniXNU reference during phone restart. Cloned ../unixnu at 97de9e715e06d77b8ebe7b80f6e556ee7ab9a7e9. Read its source scripts/unixnu/bootimg.py, requirements, UEFI porting and supported-device docs. UniXNU public supported list has sheng/SM8550 only, not beryllium. UEFI/GOP/input/block I/O are required; its addresses/driver claims must not be copied to SDM845.
+- Concrete packaging difference: UniXNU builds gzip(BootShim+firmware)+DTB and round-trips it. Actual Poco backed-up Android boot and working TWRP are gzip-prefixed, but first custom diagnostic was raw Image+DTB. This is a test hypothesis, not a verified cause. Keep this Poco's stock header-v1 parameters and change compression only.
+- Added optional --gzip-kernel to pack-beryllium-probe.py, with strict decoder EOF/input/unused-DTB verification. New early-marker gzip candidate shim/out/beryllium-probe-early/boot-gzip.img =491520 bytes, SHA256 8c6602044b98baa5d8c7c76a6091df50d27ae86c6e5e947de5f202c5e760d55b. Android digest and extraction checks pass. No CPU code change from emulator-tested early marker. NOT booted yet. Last ADB and fastboot inventories empty while user restarts.
+
 ## First custom diagnostic boot attempt — 2026-10-21, latest
 
 - USB reappeared in authorized Android ADB. Rebooted to fastboot, reverified product beryllium and unlocked=yes, and sent original probe boot.img SHA256 24f502e953bb14aa5285f5e0f9206a34fbc90a1f8bd132ef06dfa5039be6295a using fastboot boot. Sending and Booting both OKAY; exit0. No flashing.

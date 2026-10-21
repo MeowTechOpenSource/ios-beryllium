@@ -9,9 +9,10 @@ import gzip
 import hashlib
 from pathlib import Path
 import struct
+import zlib
 
 
-def pack(stock, image, dtb):
+def pack(stock, image, dtb, compress_kernel=False):
     if len(stock) < 4096 or stock[:8] != b'ANDROID!':
         raise ValueError('Invalid stock boot image')
     page, version = struct.unpack_from('<II', stock, 36)
@@ -30,7 +31,11 @@ def pack(stock, image, dtb):
         raise ValueError('FDT length mismatch')
     if len(image) % 8:
         raise ValueError('Image must be 8-byte aligned before appended DTB')
-    kernel = image + dtb
+    kernel = (gzip.compress(image, mtime=0) if compress_kernel else image) + dtb
+    if compress_kernel:
+        decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        if decoder.decompress(kernel) != image or not decoder.eof or decoder.unused_data != dtb:
+            raise ValueError('Compressed Image and appended FDT did not round-trip')
     # Empty newc cpio archive. ABL receives a valid nonempty ramdisk, but this
     # diagnostic never reads or executes it.
     fields = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 11, 0]
@@ -57,8 +62,9 @@ def main():
     parser.add_argument('--live-dtb', type=Path, required=True)
     parser.add_argument('--image', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--gzip-kernel', action='store_true', help='Match the gzip(Image)+DTB pattern of this phone and UniXNU')
     args = parser.parse_args()
-    result = pack(args.stock_boot.read_bytes(), args.image.read_bytes(), args.live_dtb.read_bytes())
+    result = pack(args.stock_boot.read_bytes(), args.image.read_bytes(), args.live_dtb.read_bytes(), args.gzip_kernel)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(result)
     args.out.chmod(0o600)
