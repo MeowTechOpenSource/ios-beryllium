@@ -1,5 +1,13 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## POCO PHOTO / CPU MATCH FIX — 2026-10-21
+
+- User supplied screen photo after boot-init: no PID1/heartbeat. Shows AMFI/libpthread/platform expert/AKS/IOCoreSurfaceRoot registrations and AppleCLCD1080x2246 stride4320 at9d400000, presented1125x2436. Bottom zone metadata is not necessarily latest: framebuffer console is circular; upper rows include later zone metabits/extra, and blank rows after AppleCLCD suggest latest output near display registration. No explicit panic visible.
+- Found concrete CPU-driver mismatch: mkberylliumadt emits qcom,kryo385, but KernelConfigTables SweetCPU IONameMatch is only qcom,kryo470. No SWEET CPU registration line visible. Added Poco-only0083 overlay correcting match and descriptive CPU name, leaving actual MPIDR/topology unchanged. Dry-run applies cleanly to exact0081 buildtree. Commit0881fa1 pushed under existing public source authorization.
+- CI39627940583 https://github.com/MeowTechOpenSource/ios-beryllium/actions/runs/39627940583 building targetberyllium from0881fa1. Next download successful artifact, verify metadata/hash, regenerate bounded RAM-init payload with visible.adt and more startup tracing (startup_debug=1), temporarily boot after user returns fastboot. This mismatch is a plausible blocker, not yet proven corrected on hardware.
+- Located matching iPhone10,3 iOS16.7.16/20H392 Apple CDN via ipsw.me catalog; private URL/catalog saved research/ipsw-x. Archive6171035648bytes SHA256 ece1194f7e233e9109c5790a8d23a4564a10a254e15ec5b09978a343265568fb. Fetching manifest only. No Apple binaries installed, no storage erase approval. User goal real iOS userland still outstanding.
+
+
 ## POCO SCHEDULER INITIALIZATION — 2026-10-21
 
 - Corrected console candidate boot-visible.img launched (Sending OKAY17.833s, Booting OKAY, exit0). User reports last line "standard timeslicing quantum is 10000 us". Confirms earlier mapping panic cleared and XNU reached sched_timeshare_init; no userland evidence. Cannot conclude scheduler/timer works from this line alone.
