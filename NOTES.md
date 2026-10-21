@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## POCO CPU-MATCH TEST / APPLE FILES PREPARED — 2026-10-21
+
+- CI39627940583 succeeded from0881fa1f9a01eafb3a9a58351e521776b374e7f2, metadata targetberyllium verified. Kernel xnu/out-beryllium-0083 SHA256308bbff59d7ce46f2ed4c5c03d26209894ea377565216e6dfd7cd6c13eeb89d4 matches artifact. Added startup_debug=1 to same visible.adt + mockfs PID1 test. Guard(UBSAN), embedded payload and image SHA checked. New boot-init-0083.img SHA256a920b03948b5a89a68c00944dfa85e4f5c90132e15732e78a845da4ce851e0df. User returned fastboot; product/unlocked verified; temporary boot started. Await actual screen result.
+- Apple userland source downloaded locally: SystemOS087-86593-047=2743074816bytes, OS087-86698-044=4730814044, AppOS087-86715-047=10485760; all ZIP CRC verified. Manifest449774bytes and DeviceTree.d22ap.im4p33719bytes CRC verified. All ignored research/ipsw-x, never public. D22 ADT decompressed with macOS libcompression LZFSE and parsed; /product present. Do not regenerate current isolated CPU-test ADT yet (would add product too).
+- Native hdiutil read-only mounts work for SystemOS and OS; ARM64 dyld shared cache is present (~2.4GiB). Source images available for local root-image preparation later; no phone filesystem writes, actual iOS userland still not running. Temporary mounts detached after inspection.
+
+
 ## POCO PHOTO / CPU MATCH FIX — 2026-10-21
 
 - User supplied screen photo after boot-init: no PID1/heartbeat. Shows AMFI/libpthread/platform expert/AKS/IOCoreSurfaceRoot registrations and AppleCLCD1080x2246 stride4320 at9d400000, presented1125x2436. Bottom zone metadata is not necessarily latest: framebuffer console is circular; upper rows include later zone metabits/extra, and blank rows after AppleCLCD suggest latest output near display registration. No explicit panic visible.
