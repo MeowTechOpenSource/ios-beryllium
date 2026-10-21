@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## LOCAL ROOT PREPARATION AUTHENTICATION — 2026-10-21
+
+- Created blank16GiB case-sensitive journaled HFS+ image research/ios-root/ios16-root.dmg via hdiutil. This is blank, NOT an installable root. No phone writes.
+- sudo -n true outside sandbox reports password required. Local root-image copy must preserve root/mobile ownership; do not silently copy as macOS user and claim valid iOS metadata.
+- User-facing outputs/prepare-poco-ios-root.sh prepared and bash syntax-checked: mounts three source images read-only, new local HFS image writable, rsync preserves numeric owners/hard links/extended metadata, links dyld cache, detaches mounts. Requires user to run via sudo in Terminal (password stays local). Base filesystem only; cryptex fallback links, keybag/logd/var setup and validation remain before install. Script contains no fastboot/ADB/physical-device operation. No admin password requested through chat.
+
+
 ## POCO USERLAND CONFIRMED — 2026-10-21
 
 - User reports corrected0083 boot advanced to Skywalk, then explicitly reports "POCO test init: still alive". This is the known static test program's heartbeat, proving its userland execution and select timeout wakeups on Poco. Bootloader send/boot were bothOKAY17.847s/0.073s. No Apple launchd/SpringBoard evidence yet; do not label static program iOS success.
