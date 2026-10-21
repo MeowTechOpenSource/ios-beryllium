@@ -1,5 +1,13 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Poco diagnostic milestone — 2026-10-21
+
+- Implemented a separate beryllium stage-zero diagnostic, not an XNU port yet. Uses bounded live-FDT validation and explicit Poco framebuffer metadata before display writes; no storage/PMIC/GIC/RPMh/PSCI calls. Original sweet build geometry unchanged unless BERYLLIUM_DIAGNOSTIC is selected.
+- Local toolchain: ../port-toolchain Python environment, ziglang 0.17.0 and unicorn 2.1.4. Build: ../port-toolchain/bin/python tools/build-beryllium-probe.py. Output Image is 81920 bytes with a checked ARM64 Linux header. It is NOT a packaged Android boot.img and is NOT hardware tested.
+- Verification: tools/test-beryllium-fdt.py passes 5 test methods including all truncated fixture lengths and rejected hardware/layouts. tools/test-beryllium-probe.py passes 2 methods: actual ARM64 code at two nonzero load addresses reaches explicit completion and draws; wrong target halts without framebuffer writes. Unicorn must run outside this host sandbox (sandboxed initialization SIGILL). Final smoke run: 18.157 s, all pass. Repository validation and diff whitespace checks pass.
+- Last device recheck still sees only USB3.1 hub; fastboot inventory empty. User confirms FASTBOOT screen and unlocked bootloader, neither independently confirmed. No flash/erase/boot command executed. Next: working USB enumeration, actual stock boot/DTB and backups, diagnostic packaging/review, on-device diagnostic; then XNU hardware port and userland.
+- Docs: docs/BERYLLIUM_BRINGUP.md. No CI run or beryllium iOS success exists. No destructive authorization was inherited from upstream.
+
 ## Local Poco F1 investigation — 2026-10-21
 
 - Local upstream baseline: 425b25102b6a9ee4b68fb2b9ca5d6a086b8a4116. This is a different user's device and session; upstream historical destructive authorization does not apply.
