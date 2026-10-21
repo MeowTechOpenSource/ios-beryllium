@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## CUSTOM CODE RUNNING ON POCO — 2026-10-21, latest
+
+- Authorized ADB returned; rebooted to bootloader, reverified beryllium/unlocked=yes, then fastboot boot of early-marker gzip candidate 8c6602044b98baa5d8c7c76a6091df50d27ae86c6e5e947de5f202c5e760d55b. Send480KB OKAY, Booting OKAY, exit0.
+- User explicitly reports BLUE DIAGNOSTIC SCREEN. This establishes our custom diagnostic is executing and drawing on the actual Poco. It does not establish XNU or iOS execution. The working test changed both early marker and gzip relative to first raw default probe; compression alone is not isolated as the cause.
+- Pending text request: MPIDR, MMFR0, CNTFRQ, EL and RESULT values. Do not reboot before user captures them. Need these and target live-memory/IRQ facts for first XNU handoff. Captured live memory banks differ from sweet (upper bank begins 0x140000000), so do not reuse sweet --highmem.
+- Source audit: current loader.c uses fixed FB_BASE/FB geometry and trusts payload segments; beryllium XNU loader needs target framebuffer and memory-range validation before kernel copy/handoff. No XNU candidate built yet. gh auth status inside sandbox reports invalid credentials; do not claim CI access or expose token.
+
 ## UniXNU comparison — 2026-10-21, latest
 
 - User requested UniXNU reference during phone restart. Cloned ../unixnu at 97de9e715e06d77b8ebe7b80f6e556ee7ab9a7e9. Read its source scripts/unixnu/bootimg.py, requirements, UEFI porting and supported-device docs. UniXNU public supported list has sheng/SM8550 only, not beryllium. UEFI/GOP/input/block I/O are required; its addresses/driver claims must not be copied to SDM845.

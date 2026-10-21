@@ -20,6 +20,10 @@ The original diagnostic candidate was sent with `fastboot boot` after rechecking
 
 An explicit `--early-marker` build now draws a red entry screen using this phone's verified splash reservation before validating its FDT, and shows the rejection or fault path. Accepted FDTs turn the screen blue. This mode is for this identified physical unit only; it must not be used to discover an unknown device's framebuffer. The default build keeps its guard. Early outputs are under `shim/out/beryllium-probe-early/`; the new image has not yet been sent. The next step is a working fastboot data connection and screen evidence from the early probe.
 
+## Confirmed custom-code hardware milestone
+
+The early-marker gzip candidate was RAM-booted after renewed ADB connectivity and direct product/unlock verification. The user reports the blue diagnostic screen on the Poco. This confirms execution and rendering of the custom diagnostic on hardware. Exact CPU register and RESULT text is still requested. XNU and iOS have not started. Both early-marker code and gzip packaging changed since the first unsuccessful screen observation, so the cause is not isolated to compression alone.
+
 ## Stage zero implementation
 
 `shim/beryllium_probe.c` uses the upstream arm64 entry and text renderer, but does not call the sweet loader or its hardware probes. It reports CPU registers and draws a diagnostic screen only after the supplied live FDT validates. It does not invoke storage, PMIC, RPMh, GIC or PSCI operations. It halts afterward; it does not boot XNU.
