@@ -1,5 +1,15 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## USERDATA WRITE AUTHORIZED / IMAGE VALIDATED — 2026-10-22
+
+- User explicitly says local helper finished and "i authorize you to write to the ufs/format userdata". This authorizes userdata overwrite for iOS; do not ask again. Keep bootloaders/recovery/modem/persist intact. No flash performed yet.
+- Fastboot independently verified productberyllium/unlockedyes, userdata size0x1c457f7000, typef2fs, max-download805306368bytes. Prepared read-only UFS test with exact live hostreg1d84000 size2500, rd=ufsroot0 ufsroot=userdata ufsrw=0 sweetlog=0 and otherhardwaredisabled. boot-ufs-readonly.img SHAd00b76b5917387a53fe0e75a9ac0066d7b589dfedf008e442f3376b0a056287e launched successfully17.834s/0.073s. User reports unknown volume signature/read-only/unknown-dev mount, consistent with HFS reading existing F2FS. Need no claim writes occurred.
+- Base image executableuid0/gid0/mode755, cache hardlinks and launchd tweaks verified. Finalized cryptex fallback links, keybag/logd dirs, containers, migration and UI compatibility prefs. Root helper through osascript authenticated but TCC denied Documents; cloned image/scripts to /private/tmp/poco-ios-finalize and repeated successfully, then cloned finalized image back. Temporary-image admin ownership/keybag verification passed. All mounts detached.
+- Final rawHFSX research/ios-root/ios16-root-final.img exactly17179869184bytes, HFSblock4096 count4194304, SHA256dc915ea4e2d2e51a42b86853d33b4e55f0ed9473330f8344cacd2ed9fdd2f0f5. Privileged fsck_hfs -fn via read-only virtual device reports volumePocoIOSRoot appearsOK (exit0). Raw-filefsck unsupported onmac; no erroneous pass claim. Rootimageisprivate/ignored.
+- First Apple-userland temporaryboot ready: ios-ufs.adt generated with D22product, exactPocoCPU/RAM/display andufsnode. payload-ios.bin guardchecked; boot-ios.img SHA1535e9adb495b78736af842146496e2e7d5a85aaf7aeb1c8a9e498dbaa6d92be. Args rd=ufsroot0 ufsroot=userdata ufsrw=1 rootrw=1 sweetlog=1, touch/keys/usbdisabled, cpus1. Persistent log writes onlyuserdata tail, beyond16GiBimage. Actual iOS launchd/UI NOT booted yet.
+- Phone disappeared before finalfastbootqueries: neitherADBnorfastboot present. Asked reconnectFASTBOOT. No flash/erase started. Next: bounded inventory, verifyidentity/unlock/userdatacapacity, fastboot flash userdata final.img (auto-sparse max768MiB), captureallchunks; ONLYuserdata. Then temporaryfastbootboot boot-ios.img, user screen evidence; iffailureTWRPreadpersistlog. Authorizationpersists.
+
+
 ## LOCAL ROOT PREPARATION AUTHENTICATION — 2026-10-21
 
 - Created blank16GiB case-sensitive journaled HFS+ image research/ios-root/ios16-root.dmg via hdiutil. This is blank, NOT an installable root. No phone writes.
