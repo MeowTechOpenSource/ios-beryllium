@@ -1,5 +1,13 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Local Poco F1 investigation — 2026-10-21
+
+- Local upstream baseline: 425b25102b6a9ee4b68fb2b9ca5d6a086b8a4116. This is a different user's device and session; upstream historical destructive authorization does not apply.
+- New target: user-reported Poco F1 / beryllium, unlocked. No independent device identity or unlock verification yet. ADB/fastboot inventories empty; USB inventory sees only a USB hub. No boot/flash/erase performed.
+- Existing sweet image is incompatible without a port: framebuffer geometry/base, panel/touch variants, PMIC/key/regulator mappings, memory reservations, CPU topology and storage setup need target verification. Linux beryllium common/variant DTS sources identified.
+- Host has Xcode 27.1; upstream build expects Xcode 15.x IORPC generation. GNU AArch64 toolchain not currently found on PATH.
+- Next action: establish actual USB data/fastboot connection, query product/unlock state, obtain device DT and backups, then build a beryllium-specific diagnostic temporary boot. No kernel build, CI run or successful userland boot exists for beryllium in this checkout.
+
 ## Agent handoff / active work (2026-10-15, latest)
 
 ### >>> UPDATE 2026-10-18 (read first, then the 10-17 handoff below) <<<
