@@ -14,6 +14,12 @@
 
 This target is a port in progress. **iOS/XNU has not booted on a Poco F1 in this checkout.** The upstream sweet kernel and boot image are not compatible by default.
 
+## First custom hardware attempt
+
+The original diagnostic candidate was sent with `fastboot boot` after rechecking product and unlock state. The bootloader reported successful transfer and boot. The user saw the POCO logo or a black screen, so there is no evidence of diagnostic completion on hardware. XNU/iOS remain unbooted.
+
+An explicit `--early-marker` build now draws a red entry screen using this phone's verified splash reservation before validating its FDT, and shows the rejection or fault path. Accepted FDTs turn the screen blue. This mode is for this identified physical unit only; it must not be used to discover an unknown device's framebuffer. The default build keeps its guard. Early outputs are under `shim/out/beryllium-probe-early/`; the new image has not yet been sent. The next step is a working fastboot data connection and screen evidence from the early probe.
+
 ## Stage zero implementation
 
 `shim/beryllium_probe.c` uses the upstream arm64 entry and text renderer, but does not call the sweet loader or its hardware probes. It reports CPU registers and draws a diagnostic screen only after the supplied live FDT validates. It does not invoke storage, PMIC, RPMh, GIC or PSCI operations. It halts afterward; it does not boot XNU.

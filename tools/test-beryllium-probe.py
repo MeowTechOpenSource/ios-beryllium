@@ -7,6 +7,7 @@ This checks relocation, FDT handling, rendering, and a wrong-device halt.
 It does not emulate the Poco bootloader, display controller, or XNU.
 """
 import importlib.util
+import os
 from pathlib import Path
 import struct
 import unittest
@@ -15,6 +16,8 @@ from unicorn import Uc, UC_ARCH_ARM64, UC_MODE_ARM, UC_HOOK_CODE
 from unicorn.arm64_const import UC_ARM64_REG_PC, UC_ARM64_REG_X0
 
 ROOT = Path(__file__).resolve().parents[1]
+PROBE_DIR = Path(os.environ.get('BERYLLIUM_PROBE_DIR', str(ROOT / 'shim/out/beryllium-probe')))
+EARLY = os.environ.get('BERYLLIUM_EARLY_MARKER') == '1'
 spec = importlib.util.spec_from_file_location('fdt_fixtures', ROOT / 'tools/test-beryllium-fdt.py')
 fixtures = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixtures)
@@ -24,7 +27,7 @@ DTB = 0x85000000
 
 
 def result_offset():
-    data = (ROOT / 'shim/out/beryllium-probe/probe.elf').read_bytes()
+    data = (PROBE_DIR / 'probe.elf').read_bytes()
     header = struct.unpack_from('<16sHHIQQQIHHHHHH', data)
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, header[6] + i * header[11])
                 for i in range(header[12])]
@@ -41,7 +44,7 @@ def result_offset():
 
 
 def execute(load, device, blob=None):
-    image = (ROOT / 'shim/out/beryllium-probe/Image').read_bytes()
+    image = (PROBE_DIR / 'Image').read_bytes()
     if image[56:60] != b'ARM\x64' or struct.unpack_from('<Q', image, 16)[0] != len(image):
         raise AssertionError('Build a valid diagnostic Image first')
     uc = Uc(UC_ARCH_ARM64, UC_MODE_ARM)
@@ -91,7 +94,11 @@ class DiagnosticTests(unittest.TestCase):
 
     def test_wrong_device_halts_without_writing_framebuffer(self):
         screen = execute(0x80080000, 'xiaomi,sweet')
-        self.assertEqual(screen, bytes(len(screen)))
+        if EARLY:
+            self.assertEqual(screen[:4], struct.pack('<I', 0xffff0000))
+            self.assertIn(struct.pack('<I', 0xffffffff), screen)
+        else:
+            self.assertEqual(screen, bytes(len(screen)))
 
 
 if __name__ == '__main__':

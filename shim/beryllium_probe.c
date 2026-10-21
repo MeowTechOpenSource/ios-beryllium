@@ -45,7 +45,23 @@ void shim_main(uint64_t dtb)
     struct beryllium_fb fb;
     /* ABL supplies a mapped FDT pointer in x0. The parser limits accesses to
      * the declared blob and rejects totals above 2 MiB. */
-    if (!beryllium_framebuffer((const void *)dtb, 2 * 1024 * 1024, &fb)) halt();
+#ifdef BERYLLIUM_EARLY_MARKER
+    /* Opt-in test for the already identified physical phone only. The splash
+     * reservation was read from its live FDT and its panel mode from DRM.
+     * This diagnostic intentionally draws before profile validation so a
+     * rejection is observable. The default probe retains its no-write guard. */
+    con_fb = (volatile uint32_t *)(uintptr_t)0x9d400000;
+    framebuffer_ready = 1;
+    con_clear(RED);
+    con_str("ENTRY", "Poco CPU reached C");
+    con_hex("DTB", dtb);
+#endif
+    if (!beryllium_framebuffer((const void *)dtb, 2 * 1024 * 1024, &fb)) {
+#ifdef BERYLLIUM_EARLY_MARKER
+        con_str("FDT", "profile rejected");
+#endif
+        halt();
+    }
     con_fb = (volatile uint32_t *)(uintptr_t)fb.base;
     framebuffer_ready = 1;
     con_clear(BLUE);

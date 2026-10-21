@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## First custom diagnostic boot attempt — 2026-10-21, latest
+
+- USB reappeared in authorized Android ADB. Rebooted to fastboot, reverified product beryllium and unlocked=yes, and sent original probe boot.img SHA256 24f502e953bb14aa5285f5e0f9206a34fbc90a1f8bd132ef06dfa5039be6295a using fastboot boot. Sending and Booting both OKAY; exit0. No flashing.
+- User reported POCO logo or black screen, so custom execution/display success is NOT proven. No blue RESULT evidence. ADB/fastboot absent afterward, as expected for a halted non-USB diagnostic but also consistent with failure. User asked to return to fastboot; no fastboot connection has reappeared yet. USB inventory again lacks USB2.1 branch.
+- Added opt-in --early-marker build for this already-identified hardware: draws a red C-entry screen at the verified 0x9d400000 splash reservation before parser, prints DTB pointer, prints profile rejection or exception; accepted profile turns blue. This intentionally weakens the pre-write profile guard only for the explicit per-phone debug build. Default build still validates before drawing. No storage code.
+- Early candidate shim/out/beryllium-probe-early/boot.img 569344 bytes, SHA256 b37ef32aee4a7c0e0ba9ee98eadc3ace5d30e787873a5e77815f711fbae4392b. NOT sent yet. Final early-marker ARM64 emulator run: all 4 tests passed in 79.735 s, including actual captured FDT and wrong-device red rejection. Repository validation and diff checks pass.
+
 ## Actual Poco hardware access — 2026-10-21, latest
 
 - ADB authorized and phone verified beryllium / SDM845. Android boot lock props were misleading: fastboot product=beryllium, unlocked=yes, oem device-info unlocked=true / critical unlocked=true.

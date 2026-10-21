@@ -6,6 +6,7 @@ packaged: the actual phone's stock boot header/DTB must be obtained first.
 This script never invokes adb/fastboot or accesses a device.
 """
 import os
+import argparse
 from pathlib import Path
 import struct
 import subprocess
@@ -13,8 +14,11 @@ import sys
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--early-marker', action='store_true', help='Use the framebuffer reservation verified on this specific Poco before FDT validation')
+    args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    out = root / 'shim/out/beryllium-probe'
+    out = root / ('shim/out/beryllium-probe-early' if args.early_marker else 'shim/out/beryllium-probe')
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, ZIG_GLOBAL_CACHE_DIR=str(out / 'zig-cache'))
     command = [sys.executable, '-m', 'ziglang']
@@ -22,6 +26,8 @@ def main():
              '-fno-builtin', '-nostdlib', '-fno-pic', '-fno-stack-protector',
              '-mgeneral-regs-only', '-mstrict-align', '-Wall', '-Wextra', '-Werror',
              '-DBERYLLIUM_DIAGNOSTIC']
+    if args.early_marker:
+        flags.append('-DBERYLLIUM_EARLY_MARKER')
     sources = ['start.S', 'console.c', 'beryllium_fdt.c', 'beryllium_probe.c']
     objects = []
     for source in sources:
