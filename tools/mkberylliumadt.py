@@ -122,7 +122,10 @@ def build(blob):
     cpus.children = cpus.children[:1]
     prop(cpus.children[0], 'compatible', mkadt.cstr('qcom,kryo385') + mkadt.cstr('ARM,v8'))
     fb = next(c for c in tree.children if c.name == 'sweet-fbcon')
-    prop(fb, 'reg', mkadt.u64(0x9d400000, 0x2400000))
+    # Map visible pixels, not the 36MiB firmware reservation: early io_map
+    # only has page tables for framebuffer geometry plus bootstrap overhead.
+    visible_bytes = (2246 * 4320 + 0x3fff) & ~0x3fff
+    prop(fb, 'reg', mkadt.u64(0x9d400000, visible_bytes))
     prop(fb, 'height', mkadt.u32(2246))
     pram = next(c for c in tree.children if c.name == 'pram')
     prop(pram, 'reg', mkadt.u64(BASE + WINDOW - PANIC, PANIC))

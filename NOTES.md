@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## XNU EXECUTION CONFIRMED — 2026-10-21
+
+- User reports first XNU test: "SWEET EARLY PANIC pmap_map_bd_with_options: no PIE for vaddr". Source panic text is "no PTE for vaddr"; this confirms XNU early panic code running, not userland.
+- Likely cause identified in source: fbcon_probe maps ADT reg[1] (we used whole36MiB splash reservation), while arm_vm_init prepares early I/O PTEs for 12MiB + visible framebuffer at this255MiB RAM size, rounded8MiB. Oversized36MiB mapping exceeds prepared range. Corrected ADT to page-rounded visible2246*4320=0x944000 bytes, retaining physicalbase9d400000. Same kernel, no CI rebuild necessary. Bounds guard and actual packed ADT checked, UFS node absent.
+- Corrected candidate shim/out/beryllium-xnu/boot-visible.img SHA256 7d09d13311f7308faba0480bccc143fb3270c3b8040c9f38a7c2008adc51d137. Boot attempt in progress; do not claim correction confirmed until screen result.
+
+
 ## ACTIVE POCO HANDOFF — 2026-10-21
 
 - User confirmed diagnostic CPU values: MPIDR=0x81000000, MMFR0=0x101122 (16K supported), CNTFRQ=19200000, EL1, RESULT diagnostic reached.
