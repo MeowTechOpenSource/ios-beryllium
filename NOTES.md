@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## POCO SCHEDULER INITIALIZATION — 2026-10-21
+
+- Corrected console candidate boot-visible.img launched (Sending OKAY17.833s, Booting OKAY, exit0). User reports last line "standard timeslicing quantum is 10000 us". Confirms earlier mapping panic cleared and XNU reached sched_timeshare_init; no userland evidence. Cannot conclude scheduler/timer works from this line alone.
+- Prepared RAM-only mockfs PID1 diagnostic using existing tools/sweet-init.S, changed output labels locally to POCO test, assembled clang arm64-ios16 and wrapped with mkinit.py. No Apple binaries or persistent filesystem. Static Mach-O16635bytes, ramdisk padded0x8000 at0x1424c8000; final kernel_end0xfffffe00084d0000.
+- New payload-init.bin with rd=md0, -enable_kprintf_spam -noprogress and hardware drivers disabled. Actual C/UBSAN bounds guard accepts; embedded RAMDisk node/packaged bytes checked. boot-init.img17117184bytes SHA256 c84d9a6e82903e5e3313272c75843bb3b95a1f7a1dbb75069613dcb52323ba11. Temporary boot started after product/unlocked checks; transfer in progress. Success requires on-screen "POCO test userspace: init running as PID 1" and repeated heartbeat. This would still be a static test, not real Apple iOS userland.
+
+
 ## XNU EXECUTION CONFIRMED — 2026-10-21
 
 - User reports first XNU test: "SWEET EARLY PANIC pmap_map_bd_with_options: no PIE for vaddr". Source panic text is "no PTE for vaddr"; this confirms XNU early panic code running, not userland.
