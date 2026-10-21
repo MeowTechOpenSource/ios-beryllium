@@ -40,15 +40,16 @@ def result_offset():
     raise AssertionError('Diagnostic result symbol absent')
 
 
-def execute(load, device):
+def execute(load, device, blob=None):
     image = (ROOT / 'shim/out/beryllium-probe/Image').read_bytes()
     if image[56:60] != b'ARM\x64' or struct.unpack_from('<Q', image, 16)[0] != len(image):
         raise AssertionError('Build a valid diagnostic Image first')
     uc = Uc(UC_ARCH_ARM64, UC_MODE_ARM)
     uc.mem_map(load, (len(image) + 4095) & ~4095)
     uc.mem_write(load, image)
-    uc.mem_map(DTB, 4096)
-    uc.mem_write(DTB, fixtures.fixture(device=device))
+    blob = blob if blob is not None else fixtures.fixture(device=device)
+    uc.mem_map(DTB, (len(blob) + 4095) & ~4095)
+    uc.mem_write(DTB, blob)
     uc.mem_map(FB, FB_SIZE)
     uc.reg_write(UC_ARM64_REG_X0, DTB)
     reached_halt = []
@@ -80,6 +81,13 @@ class DiagnosticTests(unittest.TestCase):
                 self.assertIn(struct.pack('<I', 0xffffffff), screen)
                 self.assertIn(struct.pack('<I', 0xffffff00), screen)
                 self.assertEqual(screen[-4:], struct.pack('<I', 0xff0000a0))
+
+    def test_downstream_tuple_reaches_completion(self):
+        execute(0x80080000, 'xiaomi,beryllium', fixtures.fixture(downstream=True))
+
+    @unittest.skipUnless((ROOT / 'dtb/poco-f1/live.dtb').exists(), 'No local hardware dump')
+    def test_local_hardware_tree_reaches_completion(self):
+        execute(0x80080000, 'xiaomi,beryllium', (ROOT / 'dtb/poco-f1/live.dtb').read_bytes())
 
     def test_wrong_device_halts_without_writing_framebuffer(self):
         screen = execute(0x80080000, 'xiaomi,sweet')

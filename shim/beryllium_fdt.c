@@ -7,6 +7,7 @@ struct props {
     uint32_t reglen, width, height, stride, phandle, region;
     unsigned parent_ac, parent_sc, ac, sc;
     int chosen, reserved, simple, format, device, disabled;
+    int downstream, model, board, msm, panel, splash;
 };
 struct region { uint32_t id; uint64_t base, size; };
 
@@ -32,6 +33,21 @@ static int member(const unsigned char *s, size_t n, const char *v)
     }
     return 0;
 }
+/* Match a whole command-line token, never a substring or unterminated input. */
+static int bootarg(const unsigned char *s, size_t n, const char *value)
+{
+    if (!n || s[n - 1]) return 0;
+    size_t i = 0;
+    while (i + 1 < n) {
+        while (i < n && s[i] == ' ') i++;
+        size_t start = i, k = 0;
+        while (i < n && s[i] && s[i] != ' ') i++;
+        while (start + k < i && value[k] && s[start + k] == (unsigned char)value[k]) k++;
+        if (start + k == i && !value[k]) return 1;
+        if (i >= n || !s[i]) break;
+    }
+    return 0;
+}
 static int regvalue(const struct props *p, uint64_t *base, uint64_t *size)
 {
     unsigned a = p->parent_ac, s = p->parent_sc;
@@ -51,7 +67,8 @@ int beryllium_framebuffer(const void *blob, size_t available,
     struct props stack[MAX_DEPTH] = {0}, fb = {0};
     struct region regions[64];
     unsigned nr = 0, depth = 0, matches = 0;
-    int device = 0, ended = 0, root_seen = 0;
+    int device = 0, downstream = 0, panel = 0, ended = 0, root_seen = 0;
+    uint64_t splash_base = 0, splash_size = 0;
     if (!b || !out || available < 40 || be(b) != 0xd00dfeed) return 0;
     uint32_t total = be(b + 4), so = be(b + 8), no = be(b + 12);
     uint32_t ns = be(b + 32), ss = be(b + 36);
@@ -82,15 +99,22 @@ int beryllium_framebuffer(const void *blob, size_t available,
                 p.chosen = eq(b + start, pos - start + 1, "chosen");
                 p.reserved = eq(b + start, pos - start + 1, "reserved-memory");
             }
+            if (depth == 2 && p.reserved)
+                p.splash = eq(b + start, pos - start + 1, "cont_splash_region@9d400000");
             stack[depth++] = p;
             pos = (pos + 4) & ~(size_t)3;
             if (pos > end) return 0;
         } else if (token == 2) {
             if (!depth) return 0;
             struct props p = stack[--depth];
-            if (!depth) device = p.device;
+            if (!depth) {
+                device = p.device;
+                downstream = p.downstream && p.model && p.board && p.msm;
+            }
+            if (p.chosen && p.panel) panel = 1;
+            if (p.splash && !regvalue(&p, &splash_base, &splash_size)) return 0;
             if (p.simple && p.chosen) { fb = p; matches++; }
-            if (p.phandle && p.reserved) {
+            if (p.phandle && p.reserved && p.reg) {
                 uint64_t base, size;
                 if (!regvalue(&p, &base, &size) || nr == 64) return 0;
                 for (unsigned i = 0; i < nr; i++)
@@ -108,7 +132,19 @@ int beryllium_framebuffer(const void *blob, size_t available,
             struct props *p = &stack[depth - 1];
             if (eq(name, n, "compatible")) {
                 p->simple = member(v, len, "simple-framebuffer");
-                if (depth == 1) p->device = member(v, len, "xiaomi,beryllium");
+                if (depth == 1) {
+                    p->device = member(v, len, "xiaomi,beryllium");
+                    p->downstream = member(v, len, "qcom,sdm845");
+                }
+            } else if (depth == 1 && eq(name, n, "model")) {
+                p->model = eq(v, len, "Xiaomi Technologies, Inc. Beryllium MP v2.1");
+            } else if (depth == 1 && eq(name, n, "qcom,board-id")) {
+                p->board = len == 8 && be(v) == 69 && be(v + 4) == 0;
+            } else if (depth == 1 && eq(name, n, "qcom,msm-id")) {
+                p->msm = len == 8 && be(v) == 321 && be(v + 4) == 0x20001;
+            } else if (p->chosen && eq(name, n, "bootargs")) {
+                p->panel = bootarg(v, len, "msm_drm.dsi_display0=dsi_tianma_fhd_nt36672a_video_display:") ||
+                           bootarg(v, len, "msm_drm.dsi_display0=dsi_ebbg_fhd_ft8719_video_display:");
             } else if (eq(name, n, "reg")) { p->reg = v; p->reglen = len; }
             else if (eq(name, n, "format")) p->format = eq(v, len, "a8r8g8b8");
             else if (eq(name, n, "status"))
@@ -129,7 +165,16 @@ int beryllium_framebuffer(const void *blob, size_t available,
         else if (token == 9) { if (depth || !root_seen) return 0; ended = 1; break; }
         else return 0;
     }
-    if (!ended || !device || matches != 1 || fb.disabled || !fb.format || fb.width != 1080 ||
+    if (!ended) return 0;
+    /* This downstream profile was verified from this phone's recovery FDT
+     * and active DRM mode. Require board, SoC, model, panel and reservation;
+     * generic Qualcomm compatibility alone must never select a display. */
+    if (!matches && downstream && panel && splash_base == 0x9d400000 &&
+        splash_size == 0x2400000) {
+        out->base = splash_base; out->size = splash_size;
+        return 1;
+    }
+    if (!device || matches != 1 || fb.disabled || !fb.format || fb.width != 1080 ||
         fb.height != 2246 || fb.stride != 4320) return 0;
     uint64_t base = 0, size = 0;
     if (fb.reg) {

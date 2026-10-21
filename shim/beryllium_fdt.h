@@ -7,6 +7,7 @@ struct beryllium_fb {
 };
 
 /* No framebuffer address fallback: require matching device and explicit
- * simple-framebuffer metadata in /chosen. Returns zero on malformed input. */
+ * simple-framebuffer metadata in /chosen, or the verified MP v2.1
+ * downstream board/panel/reservation tuple. Returns zero on malformed input. */
 int beryllium_framebuffer(const void *blob, size_t available,
                          struct beryllium_fb *out);

@@ -32,7 +32,7 @@ def main():
     elf = out / 'probe.elf'
     subprocess.run(command + ['cc'] + flags + objects +
                    ['-Wl,-T,' + str(root / 'shim/shim.ld'), '-Wl,--build-id=none',
-                    '-Wl,-N', '-o', str(elf)], check=True, env=env)
+                    '-Wl,-e,_head', '-Wl,--no-gc-sections', '-o', str(elf)], check=True, env=env)
     image = out / 'Image'
     subprocess.run(command + ['objcopy', '-O', 'binary', str(elf), str(image)],
                    check=True, env=env)

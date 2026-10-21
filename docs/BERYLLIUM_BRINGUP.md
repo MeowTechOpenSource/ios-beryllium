@@ -1,5 +1,17 @@
 # Poco F1 / beryllium bring-up
 
+## Hardware milestone, 21 October 2026
+
+- Authorized ADB identified beryllium / SDM845. Android's locked/green properties were misleading: fastboot getvar unlocked and oem device-info both confirmed unlocked and critical-unlocked.
+- Official TWRP 3.7.0_9-0 was checksum-verified and booted with `fastboot boot` (temporary, not flashed). Root ADB and the visible TWRP screen were verified. Android's installed-recovery reboot had only returned to Android.
+- Boot, recovery, DTBO, VBMeta, persist, modemst1, modemst2, fsg and fsc backups were read, checked against block-device sizes and hashed under ignored backup/poco-f1/. A dd transfer initially included its remote status in stdout and was rejected by the exact-size check; it was replaced with a clean cat transfer. All saved partition images passed exact-size checks.
+- Recovery automatically mounted cache and userdata read/write. Both were then unmounted successfully. No flash, erase or explicit partition-write command was issued, but this does not imply recovery made no automatic filesystem writes before unmounting.
+- Actual recovery FDT: Beryllium MP v2.1, Qualcomm SoC ID 321 / revision 0x20001, board ID 69/0. Tianma NT36672A display selected in bootargs; active DRM mode 1080x2246 at 60 Hz. Splash reservation 0x9d400000 / 0x2400000. No simple-framebuffer node exists.
+- The C parser now supports that exact downstream board/model/SoC/panel/reservation tuple as well as the earlier mainline simple-framebuffer path. Unrelated dynamic reserved-memory nodes need not have a reg property.
+- Six parser test methods pass. Four ARM64 execution methods pass, including the actual private captured FDT, synthetic downstream layout, two relocation addresses, wrong-device rejection and explicit completion markers. Final emulator run: 38.994 seconds. These remain emulator checks.
+- tools/pack-beryllium-probe.py generated a 569344-byte Android boot-v1 candidate using the backed-up boot layout, compiled Image, captured FDT and an empty cpio ramdisk. Round-trip extraction, input bytes and SHA1 header digest checked. Candidate SHA256: 24f502e953bb14aa5285f5e0f9206a34fbc90a1f8bd132ef06dfa5039be6295a.
+- The custom diagnostic has NOT been sent: ADB and the USB 2.1 hub disappeared before adb reboot bootloader could run. Last inventory sees only the USB 3.1 hub. User reports the phone is still on the TWRP screen. Reconnect the previously working data path, then RAM-boot the candidate and obtain screen evidence before claiming any custom hardware boot.
+
 This target is a port in progress. **iOS/XNU has not booted on a Poco F1 in this checkout.** The upstream sweet kernel and boot image are not compatible by default.
 
 ## Stage zero implementation
@@ -14,7 +26,7 @@ The bounded parser in `shim/beryllium_fdt.c` requires:
 - An explicit `reg`, or a resolvable `memory-region` phandle into `/reserved-memory`.
 - A region starting at 0x9d400000, large enough for the screen and no larger than the published 0x2400000 splash reservation.
 
-The last restriction is deliberate: a different live layout requires investigation before framebuffer writes. An absent or different simple-framebuffer node produces a silent halt, not an address fallback. The parser assumes a readable FDT pointer supplied by the bootloader; it is not a protected-memory validator. No actual phone DTB has been collected yet.
+The last restriction is deliberate: a different live layout requires investigation before framebuffer writes. An absent or different simple-framebuffer node produces a silent halt, not an address fallback. The parser assumes a readable FDT pointer supplied by the bootloader; it is not a protected-memory validator. The actual recovery FDT has now been collected privately; see the hardware milestone above.
 
 Hardware references are upstream Linux `sdm845-xiaomi-beryllium-common.dtsi`, `sdm845-xiaomi-beryllium-tianma.dts` and `sdm845-xiaomi-beryllium-ebbg.dts`. They identify Novatek and FocalTech touch variants; the upstream sweet Goodix driver cannot be assumed to work.
 
@@ -48,4 +60,4 @@ It loads the compiled Image at two different addresses and supplies synthetic va
 5. Run the diagnostic on-device and capture the displayed results.
 6. Port XNU memory/interrupt/CPU/storage/input support; only then attempt userland.
 
-No Android boot image is packaged yet. There are no automated fastboot or flashing commands in these tools. Upstream userdata installation is destructive; upstream author approvals are not approvals for this Poco. No user data has been erased or written.
+A local temporary diagnostic boot image is now packaged; it has not been booted on hardware. There are no automated fastboot or flashing commands in these tools. Upstream userdata installation is destructive; upstream author approvals are not approvals for this Poco. No erase or explicit partition-write command has been issued; recovery automatic mounts are documented above.

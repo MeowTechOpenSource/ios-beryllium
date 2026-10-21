@@ -13,7 +13,7 @@ U64 = lambda x: struct.pack('>Q', x)
 
 
 def fixture(device='xiaomi,beryllium', height=2246, base=0x9d400000,
-            fmt='a8r8g8b8', region=True, status='okay', duplicate=False):
+            fmt='a8r8g8b8', region=True, status='okay', duplicate=False, downstream=False):
     strings = bytearray()
     tokens = bytearray()
 
@@ -31,13 +31,19 @@ def fixture(device='xiaomi,beryllium', height=2246, base=0x9d400000,
         tokens.extend(bytes(-len(tokens) % 4))
 
     begin('')
-    prop('compatible', device.encode() + b'\0')
+    prop('compatible', (b'qcom,sdm845-mtp\0qcom,sdm845\0' if downstream else device.encode() + b'\0'))
+    if downstream:
+        prop('model', b'Xiaomi Technologies, Inc. Beryllium MP v2.1\0')
+        prop('qcom,board-id', U32(69) + U32(0))
+        prop('qcom,msm-id', U32(321) + U32(0x20001))
     prop('#address-cells', U32(2))
     prop('#size-cells', U32(2))
     begin('chosen')
     prop('#address-cells', U32(2))
     prop('#size-cells', U32(2))
-    for i in range(2 if duplicate else 1):
+    if downstream:
+        prop('bootargs', b'console=null msm_drm.dsi_display0=dsi_tianma_fhd_nt36672a_video_display: other=1\0')
+    for i in range(0 if downstream else (2 if duplicate else 1)):
         begin('framebuffer' + str(i))
         prop('compatible', b'simple-framebuffer\0')
         prop('format', fmt.encode() + b'\0')
@@ -53,7 +59,7 @@ def fixture(device='xiaomi,beryllium', height=2246, base=0x9d400000,
         prop('#address-cells', U32(2))
         prop('#size-cells', U32(2))
         prop('ranges', b'')
-        begin('framebuffer@9d400000')
+        begin('cont_splash_region@9d400000' if downstream else 'framebuffer@9d400000')
         prop('phandle', U32(42))
         prop('reg', U64(base) + U64(0x2400000))
         end()
@@ -111,6 +117,16 @@ class ParserTests(unittest.TestCase):
                      dict(status='disabled'), dict(duplicate=True)]:
             with self.subTest(args=args):
                 self.assertEqual(self.parse(fixture(**args))[0], 0)
+
+    def test_verified_downstream_tuple(self):
+        data = fixture(downstream=True)
+        self.assertEqual(self.parse(data)[0], 1)
+        for before, after in [(b'Beryllium', b'OtherDev!'),
+                              (U32(69), U32(70)),
+                              (b'dsi_tianma_', b'dsi_unknown'),
+                              (U32(0x9d400000), U32(0x9c000000))]:
+            with self.subTest(field=before):
+                self.assertEqual(self.parse(data.replace(before, after, 1))[0], 0)
 
     def test_all_truncations_rejected(self):
         data = fixture()

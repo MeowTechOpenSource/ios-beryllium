@@ -1,5 +1,13 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Actual Poco hardware access — 2026-10-21, latest
+
+- ADB authorized and phone verified beryllium / SDM845. Android boot lock props were misleading: fastboot product=beryllium, unlocked=yes, oem device-info unlocked=true / critical unlocked=true.
+- Temporarily booted official checksum-verified TWRP 3.7.0_9-0 with fastboot boot. Root shell, readable live FDT, and user-visible TWRP verified. Boot/recovery/dtbo/vbmeta/persist/modemst1/modemst2/fsg/fsc exact-size backups + SHA256SUMS saved privately in backup/poco-f1/. live.dtb saved in dtb/poco-f1/. No flash/erase issued. TWRP auto-mounted /data and /cache rw; both unmounted after noticing. Do not claim zero filesystem writes by recovery.
+- Live tree is Qualcomm-style (not xiaomi compatible, no simple-fb). Exact MP v2.1 board/model/SoC ID/panel tuple now accepted by bounded parser; splash 0x9d400000 size0x2400000; DRM 1080x2246x60, Tianma. Six parser tests pass. Four real ARM64 emulator tests pass including private actual live.dtb and explicit completion marker (38.994 s). Not hardware boot evidence.
+- Corrected Zig builder flags: explicit -e _head, --no-gc-sections, no unsupported -N. Actual built Image 81920 bytes. New pack-beryllium-probe.py uses stock boot-v1/4096 offsets, appended captured FDT, empty ramdisk. Candidate shim/out/beryllium-probe/boot.img =569344 bytes, SHA256 24f502e953bb14aa5285f5e0f9206a34fbc90a1f8bd132ef06dfa5039be6295a. Extracted candidate inputs/digest verified.
+- Custom diagnostic was NOT sent: connection vanished before adb reboot bootloader (error no devices). Subsequent USB inventories lack the USB2.1 hub too. User says phone still shows TWRP. Next: reconnect working USB2 data path; verify mode/product; fastboot boot candidate; ask for exact on-screen output. No XNU/userland boot yet. No CI build run.
+
 ## Poco diagnostic milestone — 2026-10-21
 
 - Implemented a separate beryllium stage-zero diagnostic, not an XNU port yet. Uses bounded live-FDT validation and explicit Poco framebuffer metadata before display writes; no storage/PMIC/GIC/RPMh/PSCI calls. Original sweet build geometry unchanged unless BERYLLIUM_DIAGNOSTIC is selected.
