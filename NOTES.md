@@ -1,5 +1,20 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## DISPLAY BOOT STAYS AT APPLE LOGO — 2026-10-22
+
+- User reports 0084c console-suppressed image shows plain Apple logo and remains
+  unchanged after additional wait. No screenshot of interactive iOS UI; do not
+  claim SpringBoard rendered. No exact graphics/crash reason recovered yet.
+- Prepared focused diagnostic from same 0084c payload: sweetfb_noconsole=0
+  restores screen logging; sweetiolog=- disables repetitive IOKit lookup spam;
+  existing sweetsample=SpringBoard,backboardd targets UI process stacks. Other
+  payload bytes unchanged, production bounds guard passed, sweetlog remains 0.
+- boot-ios-ui-trace.img SHA256
+  70edea9f30323939352082a669d2bf9a4f18cdadf7b078079088702888492c9e.
+  Await FASTBOOT then temporary boot. First sampler ~90s, next every120s.
+  Need SMP process/slide/pc/lr/bt or CRASH lines. Do not guess more preferences
+  or expand beyond approved256MiB window without validating additional RAM.
+
 ## APPLE SERVICES / DISPLAY TEST PREPARED — 2026-10-22
 
 - User reported Apple logo (not photographed here); later photo shows backboardd
