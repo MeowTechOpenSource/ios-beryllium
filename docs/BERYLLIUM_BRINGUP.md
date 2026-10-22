@@ -84,3 +84,11 @@ artifacts and recorded screen evidence predate it. Shared `SWEET` machine config
 `kernel.development.sweet`, internal classes, ADT matches, payload magic and legacy
 boot arguments remain compatible; see the [README](../README.md). Historical
 Redmi hardware drivers are not relabelled as completed Poco drivers.
+
+## First Apple launchd attempt
+
+The physical boot attempted Apple launchd but panicked with `OS_REASON_EXEC` (9),
+`EXEC_EXIT_REASON_WRONG_PLATFORM` (14 / `0xe`). This macOS-configured DEVELOPMENT
+kernel needs `unentitled_ios_sim_launch=1` for this iOS executable. The corrected
+temporary payload changes that argument only and has been accepted by fastboot;
+its runtime result is pending. This is not yet successful Apple userspace execution.

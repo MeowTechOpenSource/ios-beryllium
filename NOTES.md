@@ -1,5 +1,25 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## APPLE LAUNCHD EXEC PLATFORM REJECTION / RETRY — 2026-10-22
+
+- User photo shows panic: unexpected SIGKILL of launchd (CS_KILLED), namespace 9
+  code 0xe, handshake structure not initialized. Panicked task pid 1 init, 0 pages.
+  Source bsd/sys/reason.h maps this exactly to OS_REASON_EXEC /
+  EXEC_EXIT_REASON_WRONG_PLATFORM. Do NOT mislabel CS_KILLED as signature/hash
+  failure or claim launchd/dyld ran. Loader attempted Apple launchd; execution
+  was rejected. Full HFS boot log not yet recovered.
+- Upstream historical notes record identical error and successful next step;
+  kern_exec.c DEVELOPMENT tunable unentitled_ios_sim_launch permits iOS platform
+  exec in this XNU_TARGET_OS_OSX build. Original Poco payload omitted that arg.
+- Created payload-ios-platform.bin changing ONLY the 608-byte cmdline field;
+  all other payload bytes identical. Production C bounds guard returns NULL.
+  Repacked same loader/Image and appended FDT; no kernel rebuild/filesystem change.
+  boot-ios-platform.img SHA256
+  a95cd851836cdaa7c8d42122c61c800d5b296a0f40272c1cc3785421879b9691.
+- User returned FASTBOOT. Product beryllium verified. Temporary boot succeeded:
+  send OKAY 0.387s, Booting OKAY 0.073s, exit 0 / total 0.462s.
+  Await new screen after one minute. No additional partition flash.
+
 ## TEMPORARY IOS BOOT ACCEPTED — 2026-10-22
 
 - User reconnected USB. Fastboot product beryllium / unlocked yes verified.
