@@ -1,0 +1,1 @@
+ports/beryllium/xnu/*.patch -whitespace

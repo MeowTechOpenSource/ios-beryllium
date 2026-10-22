@@ -55,5 +55,5 @@ old='fbcon_transmit_data(uint8_t c)\n{'
 assert s.count(old)==1
 n=s.replace(old,old+"\n\textern int sweet_console_muted;\n\tif (sweet_console_muted && !panic_active()) return;",1)
 changes.append((name,s,n))
-patch=''.join(''.join(difflib.unified_diff(s.splitlines(True),n.splitlines(True),fromfile='a/'+p if s else '/dev/null',tofile='b/'+p, n=0 if p=='pexpert/arm/pe_serial.c' else 3)) for p,s,n in changes)
+patch=''.join(''.join(difflib.unified_diff(s.splitlines(True),n.splitlines(True),fromfile='a/'+p if s else '/dev/null',tofile='b/'+p)) for p,s,n in changes)
 (ROOT/'ports/beryllium/xnu/0084-beryllium-display-profile.patch').write_text(patch)
