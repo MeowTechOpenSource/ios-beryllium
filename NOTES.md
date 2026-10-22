@@ -11,7 +11,9 @@
   payload bytes unchanged, production bounds guard passed, sweetlog remains 0.
 - boot-ios-ui-trace.img SHA256
   70edea9f30323939352082a669d2bf9a4f18cdadf7b078079088702888492c9e.
-  Await FASTBOOT then temporary boot. First sampler ~90s, next every120s.
+  User returned FASTBOOT; product beryllium and image SHA256 verified. Temporary
+  send OKAY 0.395s, Booting OKAY 0.073s, total 0.469s exit0. Await photo.
+  First sampler ~90s, next every120s.
   Need SMP process/slide/pc/lr/bt or CRASH lines. Do not guess more preferences
   or expand beyond approved256MiB window without validating additional RAM.
 
