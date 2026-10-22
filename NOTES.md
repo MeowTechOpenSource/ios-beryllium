@@ -1,5 +1,19 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## NEXT WAIT: MOBILE_OBLITERATOR — 2026-10-22
+
+- User reports exec mobile_obliterator then SMP --- sample 0 on no-logger boot.
+  It progressed beyond mount. Sampler header is not a panic; default sampler
+  selects SpringBoard/backboardd, so it provides no wait trace for these tasks.
+- Prepared boot-ios-sample.img adding only
+  sweetsample=launchd,mobile_obliterator to no-logger payload. Production C guard
+  passes; other payload bytes identical. SHA256
+  09e95ed015968cb43c133595b754e20f37e72aa57f301a1f8ed4894495c10b81.
+- Await FASTBOOT, verify product then temporary boot. First sample is ~90s
+  after kernel sampler start, next every 120s. Request photo including SMP pc/lr/bt
+  and slide lines, not only the sample heading. sweetlog remains 0; old persisted
+  ring must not be mistaken for current run. No filesystem reflash.
+
 ## NO-LOGGER BOOT ADVANCES PAST MOUNT — 2026-10-22
 
 - User reports boot-ios-nolog.img now prints error 16 opening /dev/ufsroot0,
