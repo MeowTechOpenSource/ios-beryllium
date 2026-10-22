@@ -1,5 +1,12 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## WHOLE-FRAME GRAPHICS PASS — 2026-10-22
+
+- Visual QA caught a small kernelbootprogress overlay after sampledcolor/border checks passed. Added -noprogress to patternpayload and upgradedqemu-sweet.py --expect-pattern to compare EVERYpixel, not samples. Added tests proving single-pixelinterior/bordercorruptionisdetected.
+- Final research/qemu-beryllium-0084c-pattern-full45s exits0: pattern_mismatched_pixels0 across2425680pixels, pattern_verifiedtrue. Usespayload-qemu-0084c-pattern-clean.bin, kernel852e631/20a0d85541dc3175e146a5daad2aff9e10b7aa41bac3dad7a7f9dba9edb0b55c, -noprogress beryllium_fbtest1. Updateduser-facingpoco-emulator-graphics.png tothisCLEANframe. Earlierpatterncheckswithsamplesarenotfull-imageevidence.
+- Normal0084c60sPID1/heartbeatregressionalreadyexit0/zero unknownglyphs. Sourcee252babpublishedwithwholeframecheck/tests; latestsupportdocchangescanpublish. No hardware actions whileuserdeviceunavailable. No fullWi-Fi/audio/GPU/iOSUIclaims.
+
+
 ## FINAL OFFLINE RESULTS — 2026-10-22
 
 - Repaired graphics CI39720237145 succeeded from852e6316c21ece45ba5390b700a9aaa6b51f823e, metadata targetberyllium; kernel xnu/out-beryllium-0084c SHA20a0d85541dc3175e146a5daad2aff9e10b7aa41bac3dad7a7f9dba9edb0b55c matchesartifact.

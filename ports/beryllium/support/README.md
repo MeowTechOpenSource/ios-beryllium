@@ -8,7 +8,7 @@ APR expects a single exact packet. Final audio command results are checked again
 output buffer. Neither module is connected to a firmware or hardware transport yet.
 
 `display.h` supplies the 1080×2246 viewport mapping and BGRA test pattern used by
-the Poco-only kernel overlay. Pattern drawing is selected with `beryllium_fbtest=1`;
+the Poco-only kernel overlay. Pattern drawing is selected with `beryllium_fbtest=1 -noprogress`;
 this explicitly mutes console drawing so the pattern remains visible. Do not use
 that flag for ordinary text-based bring-up. It is CPU rendering, not Adreno work.
 
