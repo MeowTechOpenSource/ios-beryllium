@@ -1,5 +1,25 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## EXTENSIONKIT CANDIDATE INSTALLATION IN PROGRESS — 2026-10-22
+
+- User explicitly instructed “now run”. Created a fresh APFS clone of immutable
+  poco-current-root-0086.img; did NOT export the analysis shadow, which contains
+  reconstructed Apple log-format metadata. Original snapshot retained for rollback.
+- Changed only ExtensionKit/enforce_xpc_cache_code_signing Enabled to false in
+  the existing plist inode. Decoded plist equals original except that boolean.
+  Candidate cleanly detached and remounted read-only; root ownership 0:0, mode0644.
+  Journal replay/normal mount bookkeeping also occurred on the local clone.
+- Private candidate poco-extension-cache-test.img: 17179869184 bytes, SHA256
+  1586e7286f4cb338063a5f46543dccdfc8daf0cc02cde182553da59854e59164.
+  RAW/FILL sparse expansion independently verified equal size/hash, 28550 chunks.
+- Connected fastboot product beryllium, unlocked yes, userdata0x1c457f7000 verified.
+  Authorized userdata-only flash SUCCEEDED: all15 chunks, 362.040s, exit0.
+  Log research/ios-root/flash-extension-cache-test.log. After flash, product
+  query timed out10s before boot command was issued. No temporary boot sent.
+  User asked to reconnect USB while in FASTBOOT; do NOT repeat userdata flash.
+- Next temporary boot: boot-ios-baseline-clean.img, SHA834f49ce931b45f959f1995f5e648af68d1c0756d0cde51d385df8259fd9b8fd.
+  No sampler, no new kernel. Candidate is not yet a confirmed UI fix.
+
 ## INVESTIGATION: RECONSTRUCTED LOGS REVEAL EXTENSIONKIT AMFI FAILURE — 2026-10-22
 
 - User asks investigate; no further phone reboot/write this turn. Phone remains
