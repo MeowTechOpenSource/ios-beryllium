@@ -1,5 +1,41 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## INVESTIGATION: RECONSTRUCTED LOGS REVEAL EXTENSIONKIT AMFI FAILURE — 2026-10-22
+
+- User asks investigate; no further phone reboot/write this turn. Phone remains
+  on prior0084c baseline-clean attempt (user reports stuck enteringondemand).
+- Reconstructed private logformat metadata from exact iOS sharedcache and standalone
+  binaries using documented DSC/UUIDText layouts (Mandiant macos-UnifiedLogs dsc.rs,
+  uuidtext.rs). Script research/ios-root/rebuild-log-formats.py; 2710images,
+  6574ranges,180499865bytes DSC +342 executableUUIDText files. Deriveddata contains
+  Apple strings: keepprivate. Originaltraces SHAidentical to snapshot.
+- Native-reader copiedarchive attempts rejected; officialMandiant v0.7.0 parser
+  downloaded+publishedSHAverified; resolves manystrings but misses laterbootrecords
+  (nomchunkerror), so not relied on forcomplete lsdhistory. Format metadata copied
+  ONLY to localshadow snapshot's var/db/uuidtext; native log --directory then
+  yields64115lines, composefailuresdrop47527→21795. No phone/baseimagewrites.
+  Some metadata/executableformats stillmissing; don'tcallitfullydecoded.
+- Exact reconstructed lsd97 messages in TWO UIstageboots:
+  ExtensionFoundation amfi_interface_query_bootarg_state returned Policy not found;
+  Failed to read extension point cache, ExtensionKit error12 Unable to find AMFI.
+  MobileSystemServices codeSigningEnforcementIsDisabled also logs Policy not found.
+  lsd continues container queries/recreate_structure afterwards; these errors are
+  confirmedcompatibility failures, NOT proof ofsoleLaunchServicesstallcause.
+- Exact binary AMFI interface function calls __mac_syscall policy AMFI, op0x60,
+  with8byte output. Existing custompolicy registered SWEET AMFI (0085 BERYLLIUM
+  AMFI labels) has no userspace policy_syscall handler. Kernel entitlementinterface
+  != thisMACquery nor AppleMobileFileIntegrityIOKit service. Don'tfakequeries.
+- ExtensionFoundation EXDefaults.enforceXPCCacheCodeSigning reads feature
+  ExtensionKit/enforce_xpc_cache_code_signing; originalplist Enabledtrue. If AMFI
+  statequeryfails it retainsenforcement. Disassemblyreads bootstatebitsmask0x86;
+  no guessed bitmeaning or policywidebypass implemented.
+- Preparedtools/prepare-beryllium-extension-cache.py generates standalone local
+  candidate plist disablingONLYthatfeature flag; actualsource/installedfile remain
+  unchanged. Compareddecodedplists exactonekeydiff. Candidate research/ios-root/
+  ExtensionKit-beryllium-candidate.plist PRIVATE. Notinstalled, notUIverified.
+  Narrownexttest wouldmodifydevroot's singleflag instead ofmorestackinstrumentation;
+  mustpreserve snapshot, no blindcachedeletion. No wholeAMFIproviderclaim.
+
 ## USB SNAPSHOT/LOGS COLLECTED / CLEAN BASELINE BOOT — 2026-10-22
 
 - Complete private read-only16GiB snapshot poco-current-root-0086.img captured
