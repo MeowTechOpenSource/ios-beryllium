@@ -35,10 +35,18 @@ Adreno hardware model. No Wi-Fi, sound or GPU claim follows from a QEMU pass.
 
 ## Next functional milestones
 
-1. QEMU screenshot of the 0084 framebuffer pattern, plus PID 1 regression with pattern disabled.
+1. Completed offline: 0084c framebuffer pattern passes strict pixel/border checks; normal mode passes explicit PID 1/heartbeat regression. Hardware confirmation remains pending.
 2. Boot Apple launchd from HFS in an emulator with a suitable block backend or compact RAM root.
 3. Wi-Fi: implement SMEM/GLINK + QMI and SNOC CE rings before WMI/HTT and network service integration.
-4. Audio: implement ADSP remoteproc/GLINK + APR command completion before PCM buffers, AFE/ASM/codec routing and iOS frontend.
+4. Audio: implement ADSP remoteproc/GLINK and bind the tested APR completion path before PCM buffers, AFE/ASM/codec routing and iOS frontend.
 5. GPU: first obtain validated GMU/power/IOMMU/firmware state; retain the CPU display path until actual command submission is proven.
 
 No fake Wi-Fi, audio or GPU service is published as working hardware.
+
+## Verified offline results (2026-10-22)
+
+- Kernel [CI 39720237145](https://github.com/MeowTechOpenSource/ios-beryllium/actions/runs/39720237145) passes, source 852e6316c21ece45ba5390b700a9aaa6b51f823e, target beryllium. SHA256 `20a0d85541dc3175e146a5daad2aff9e10b7aa41bac3dad7a7f9dba9edb0b55c`.
+- QEMU 45-second graphics run: strict color-band and border check passes at 1080×2246. The first diagnostic caught console overwrites; the final kernel suppresses both console paths in explicit pattern mode, retaining panic output.
+- QEMU 60-second normal run: explicit PID 1 and repeated heartbeat expectations pass, zero undecodable glyphs, no visible panic. Pattern mode is disabled for this run.
+- Portable [CI 39720470788](https://github.com/MeowTechOpenSource/ios-beryllium/actions/runs/39720470788) passes display, HTC/APR, loader-guard and sparse-format tests. HTC control includes READY/service negotiation tests; parser suite includes 20,000 malformed inputs under ASan/UBSan. ARM64 freestanding compilation also passes locally.
+- The prepared sparse filesystem expands to the validated 16GiB raw-image SHA256 and is independently accepted by AOSP simg_dump. No hardware installation retry occurred while the phone was unavailable.

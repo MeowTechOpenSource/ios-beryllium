@@ -1,5 +1,14 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## FINAL OFFLINE RESULTS — 2026-10-22
+
+- Repaired graphics CI39720237145 succeeded from852e6316c21ece45ba5390b700a9aaa6b51f823e, metadata targetberyllium; kernel xnu/out-beryllium-0084c SHA20a0d85541dc3175e146a5daad2aff9e10b7aa41bac3dad7a7f9dba9edb0b55c matchesartifact.
+- QEMUresearch/qemu-beryllium-0084c-pattern45s: pattern_verifiedtrue, exit0, exactbands/border. QEMUresearch/qemu-beryllium-0084c-init60s: explicitPID1+heartbeat expectationstrue, no_panic_observed, unknown_glyphs0, exit0. Final screenshots saved outputs/poco-emulator-graphics.png andpoco-emulator-pid1.png. These are emulatoronly; 0084c notboottestedonphone. StaticdiagnosticnotApplelaunchd.
+- Device-specifictruthmatrixports/beryllium/STATUS.md andoutputs/poco-f1-support-status.md updated. Wi-FiHTCnegotiation/APRcompletion aretestedportablefoundations, notfunctionalWiFi/audio. Adrenoaccelerationabsent; graphicstestCPUonly. Olduserdatainstallattempthostfailed; exactverifiedsparseimagepreparedforfuturedevicereturn. No hardwarecommandsduringofflinework.
+- LatestportableCI39720470788 success for HTCnegotiation/display/loader/sparse. No requiredlocaltestsleftfailing. Publicsourcecanpushremainingdoccommitsunderexistingauthorization; keepallAppleartifacts/devicefilesignored.
+- Nextactualportwork: bindHTCtoSNOC/QMI/firmware, APRtoGLINK/ADSP/AFE/SLIMbus andiOSaudiofrontend; GMU/IOMMU/firmwarebeforeAdrenoGPUsubmission. Futuredevice: run0084cdiagnostic, verifyread-onlyUFSlog/partition, usevalidatedsparseuserdatainstallunderalreadyauthorizedscope, thenrealApplelaunchd/UI. Current255MiBkernelRAMmayneedreviewbeforefulluserland; do notsilentlyexpandphysicalwindowwithoutvalidation.
+
+
 ## OFFLINE FOLLOW-UP / GRAPHICS FIX RETRY — 2026-10-22
 
 - Initial0084 QEMU regression passes explicitPID1+heartbeat. Pattern run shows actualBGRA bars and patternresult0, but console overwrites rows; strictpixelcheck correctly exits4. Do not call that fullpatternpass.
