@@ -1,5 +1,17 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## EARLIER SEPUTIL WAIT / NEXT DIAGNOSTIC — 2026-10-22
+
+- User's latest lsd-diagnostic photo stops at data-protection / exec seputil;
+  later user reports SMP sample1, still no Apple logo. This differs from earlier
+  boot that reached SpringBoard26. Kernel timer alive, exact wait cause unknown.
+- Built boot-ios-seputil.img adding launchd,seputil to sampler selection; all
+  other payload bytes identical to lsd diagnostic; production bounds guard passed.
+  SHA256 4f64756cf23de6f68b0b2946bd3f4755a9333dd295a5fb525c0b2af263697501.
+- User reports in fastboot, but fastboot count0, ADB empty and current USB host
+  inventory empty. Image NOT sent. Need USB data path restored, verify beryllium,
+  then temporary boot only. sweetlog remains0; no userdata reflash.
+
 ## SPRINGBOARD CONFIRMED / LAUNCHSERVICES WAIT SYMBOLICATED — 2026-10-22
 
 - User photo19:16:57 shows SMP SpringBoard[26] slide0x8e10000 mh0x100540000,
