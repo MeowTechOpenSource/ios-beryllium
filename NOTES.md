@@ -1,5 +1,21 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## CORRECTED SAMPLER KERNEL BUILT / HARDWARE TEST LAUNCHED — 2026-10-22
+
+- CI39802005080 succeeded from9cdd3bc; downloaded kernel target and source
+  metadata verified, SHA256SUMS matched. Patch0087 local XNU syntax check and
+  production-function ASan/UBSan fixtures pass; repository integrity checks pass.
+- QEMU45s boots static diagnostic PID1 and heartbeat, zero unknown glyphs, no
+  visible panic. Emulator does not emulate UFS or prove the iOS graphical UI.
+- Hardware candidate uses same ADT, shim, development startup flags and approved
+  RAM window. Only lsd is stack-sampled; visible diagnostic console enabled.
+  Background raw-tail logger remains off. Payload production bounds guard passes.
+- Connected TWRP root/product verified; adb reboot bootloader, product beryllium
+  reverified. Temporary boot accepted send0.388s/boot0.073s total0.463s, exit0.
+  No userdata reflash. Phone now running corrected diagnostic kernel.
+- Await lsd sample photo after3–4minutes or actual UI. Still no proof of UI fix;
+  sampler locking defect is fixed and tested, underlying service wait unresolved.
+
 ## SAMPLER LOCKING FIX VALIDATED, BUILD NEXT — 2026-10-22
 
 - User asks fix UI wait. Added board patch0087: bounded64 saved-register
