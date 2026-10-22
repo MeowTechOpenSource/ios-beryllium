@@ -15,7 +15,9 @@
 - Physical candidate uses same ios-ufs.adt/RAM/loader and last full-sampler args,
   sweetlog0. Production payload guard pass. boot-ios-census.img SHA256
   fb0a11dec52e5e6decf77fafa7f055b3783d5b3a6d509e36c4a847b6b7dad6b0.
-  Await FASTBOOT; no new phone command sent yet. Need hardware census at ~90s.
+  User returned FASTBOOT. Product beryllium/checksum verified; temporary send
+  OKAY0.394s / Booting OKAY0.073s, total0.469s exit0. Await photographed
+  BERYLLIUM census lsd count/first_pid and lifecycle lines at ~90s. No reflash.
 
 ## EXPLICIT SERVICE CENSUS DIAGNOSTIC — 2026-10-22
 
