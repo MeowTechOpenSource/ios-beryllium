@@ -1,5 +1,20 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## APPLE STARTUP PROGRESSES TO CACHE LOADER — 2026-10-22
+
+- New user photo is NOT the earlier platform rejection: panicked process is
+  launchd_cache_loader PID 22 with 60 pages; namespace 7 / subcode 1, description
+  Unable to find AMFI. Confirms Apple userspace reached the cache-loader stage;
+  no SpringBoard/UI success. unentitled_ios_sim_launch corrected the first gate.
+- Historical upstream notes record exactly this cache-loader failure and the
+  development boot arg launchd_unsecure_cache=1 to use its unsigned cache path.
+  No AppleMobileFileIntegrity IOKit service is present (the built-in kernel AMFI
+  entitlement interface is different). Do not invent a fake service as a fix.
+- Prepared boot-ios-cache.img adding ONLY launchd_unsecure_cache=1 to prior payload;
+  all non-commandline payload bytes identical; production bounds guard passed.
+  SHA256 15b58a14b932a4b30e559c2c81f064a1c7537d35f3c0e8dd0b9f272e3be3ae30.
+  Await FASTBOOT before temporary boot; no new userdata flash needed.
+
 ## APPLE LAUNCHD EXEC PLATFORM REJECTION / RETRY — 2026-10-22
 
 - User photo shows panic: unexpected SIGKILL of launchd (CS_KILLED), namespace 9

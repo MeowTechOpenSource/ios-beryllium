@@ -91,4 +91,4 @@ The physical boot attempted Apple launchd but panicked with `OS_REASON_EXEC` (9)
 `EXEC_EXIT_REASON_WRONG_PLATFORM` (14 / `0xe`). This macOS-configured DEVELOPMENT
 kernel needs `unentitled_ios_sim_launch=1` for this iOS executable. The corrected
 temporary payload changes that argument only and has been accepted by fastboot;
-its runtime result is pending. This is not yet successful Apple userspace execution.
+the next photo confirms Apple startup reached `launchd_cache_loader` PID 22. It then exits with namespace 7 / subcode 1, `Unable to find AMFI`. The next temporary image adds `launchd_unsecure_cache=1`, matching the recorded upstream development path. No UI is confirmed.

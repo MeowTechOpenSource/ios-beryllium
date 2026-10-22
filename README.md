@@ -3,9 +3,9 @@
 XNU / iOS bring-up for the **Xiaomi Poco F1 (`beryllium`, Snapdragon 845 / Kryo 385)**,
 derived from [dipa-studio/ios-sweet](https://github.com/dipa-studio/ios-sweet).
 
-**The physical Poco runs XNU and our static diagnostic PID 1, including timed
-heartbeats. Apple's launchd, SpringBoard and an interactive iOS UI have not yet
-been demonstrated.** Upstream Redmi screenshots and milestones are not Poco results.
+**The physical Poco runs XNU and reaches Apple's `launchd_cache_loader` (PID 22),
+which currently exits with `Unable to find AMFI`. SpringBoard and an interactive
+iOS UI have not yet been demonstrated.** Upstream Redmi screenshots and milestones are not Poco results.
 
 ## What works on this target
 
@@ -19,7 +19,7 @@ been demonstrated.** Upstream Redmi screenshots and milestones are not Poco resu
 | GPU | CPU framebuffer only; no Adreno 630 acceleration. |
 | Touch / keys / USB | Physical XNU drivers disabled. Android/recovery USB support does not establish XNU USB support. |
 | Battery | Static fallback; no genuine gauge readings. |
-| iOS apps / UI | Not reached. The diagnostic PID 1 is our own test program. |
+| iOS apps / UI | Apple startup reaches the cache-loader stage and panics; SpringBoard/UI not reached. |
 
 See the [device-specific support matrix](ports/beryllium/STATUS.md) for evidence,
 [bring-up guide](docs/BERYLLIUM_BRINGUP.md) for commands, and
