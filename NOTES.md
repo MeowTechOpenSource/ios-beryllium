@@ -15,7 +15,9 @@
   not proof that a UI frame has already been seen. No touch/GPU support claim.
 - Generated payload-ios-display.bin; production guard passed. boot-ios-display.img
   SHA256 cc86cfa2fb17f0fe1ac91d36ad7d50984f7a5ef9520f6054c25f27e39cf27c2a.
-  Await FASTBOOT before temporary test; no userdata reflash.
+  User returned FASTBOOT; product beryllium/image SHA256 verified. Temporary boot
+  send OKAY 0.389s, Booting OKAY 0.073s, total 0.464s exit 0. Await photo
+  after ~2 minutes. No userdata reflash.
 
 ## NEXT WAIT: MOBILE_OBLITERATOR — 2026-10-22
 
