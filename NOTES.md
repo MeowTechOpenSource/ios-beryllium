@@ -29,7 +29,11 @@
   alongside launchd/seputil/UI/lsd/preferences/install targets; unchanged other
   bytes, production guard passed. boot-ios-keybag.img SHA256
   dd977ff1cba74e10f9c191dde3d0191727349018feb0eb6b34b9ffe2d9730392.
-  Await FASTBOOT or report boot advanced. No new userdata flash.
+  User returned FASTBOOT after earlier boot advanced. Initial attempt saw only
+  USB3.1 Hub/no phone; later reconnect verified beryllium/image checksum and
+  temporary boot succeeded: send0.387s, Booting0.073s, total0.462s exit0.
+  Full list includes lsd/keybagd/UI; await lsd stacks or keybagd if earlier wait.
+  No new userdata flash.
 
 ## EARLIER SEPUTIL WAIT / NEXT DIAGNOSTIC — 2026-10-22
 
