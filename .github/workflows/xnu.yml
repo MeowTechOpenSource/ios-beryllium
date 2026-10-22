@@ -16,7 +16,7 @@ on:
         description: Hardware framebuffer profile (beryllium is experimental single-CPU bring-up)
         type: choice
         options: [sweet, beryllium]
-        default: sweet
+        default: beryllium
       keep_going:
         description: make -k (collect all compile errors in one run)
         default: "true"
@@ -36,7 +36,7 @@ env:
   MACOS_VERSION: ${{ inputs.macos_version || '13.5' }}
   KERNEL_CONFIG: ${{ inputs.kernel_config || 'DEVELOPMENT' }}
   MACHINE_CONFIG: ${{ inputs.machine_config || 'SWEET' }}
-  HARDWARE_TARGET: ${{ inputs.hardware_target || 'sweet' }}
+  HARDWARE_TARGET: ${{ inputs.hardware_target || 'beryllium' }}
 
 jobs:
   build:

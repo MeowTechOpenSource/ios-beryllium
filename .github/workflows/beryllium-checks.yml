@@ -7,6 +7,7 @@ on:
       - 'tools/test-beryllium-*'
       - 'tools/test-androidsparse.py'
       - 'tools/mkandroidsparse.py'
+      - 'tools/qemu-beryllium.py'
       - 'tools/qemu-sweet.py'
       - 'tools/test-qemu-pattern.py'
       - '.github/workflows/beryllium-checks.yml'

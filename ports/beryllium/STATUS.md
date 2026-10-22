@@ -14,7 +14,7 @@ This is an XNU/iOS port. Linux driver support is a reference, not an XNU driver.
 | Wi-Fi WCN3990 | None under XNU | HTC RX envelope and READY→CONNECT_SERVICE negotiation tested with wire fixtures. No SNOC/CE DMA, QMI/firmware boot, WMI/HTT, association or iOS network interface yet. |
 | Audio WCD9340 / ADSP | None under XNU | Bounded APR encode/decode tested. No GLINK/rpmsg, ADSP boot, AFE/ASM routing, SLIMbus codec or iOS audio service yet. Speaker amplifier/routing still needs target verification. |
 | UFS | Read-only root attempt reaches HFS signature failure on existing Android filesystem, per screen report | Target host map supplied; no successful userdata write or iOS HFS boot yet. |
-| Touch / physical keys | None under XNU | HID services register; physical Sweet drivers disabled. Poco geometry correction does not port its touch controller. |
+| Touch / physical keys | None under XNU | HID services register; upstream Redmi hardware drivers disabled. Poco geometry correction does not port its touch controller. |
 | Battery | No genuine gauge reading | Existing static 100% fallback is a placeholder. |
 | USB | Android ADB / temporary TWRP / fastboot verified previously | XNU USB driver disabled; QEMU virtual devices do not establish Poco USB support. |
 | Apple iOS userland / SpringBoard | Not reached | Prepared local filesystem; only our static diagnostic PID 1 is confirmed. |
@@ -50,3 +50,5 @@ No fake Wi-Fi, audio or GPU service is published as working hardware.
 - QEMU 60-second normal run: explicit PID 1 and repeated heartbeat expectations pass, zero undecodable glyphs, no visible panic. Pattern mode is disabled for this run.
 - Portable [CI 39720470788](https://github.com/MeowTechOpenSource/ios-beryllium/actions/runs/39720470788) passes display, HTC/APR, loader-guard and sparse-format tests. HTC control includes READY/service negotiation tests; parser suite includes 20,000 malformed inputs under ASan/UBSan. ARM64 freestanding compilation also passes locally.
 - The prepared sparse filesystem expands to the validated 16GiB raw-image SHA256 and is independently accepted by AOSP simg_dump. No hardware installation retry occurred while the phone was unavailable.
+
+Source naming: overlay 0085 uses BERYLLIUM diagnostic labels for adapted/reused components. The verified kernel runs above predate this overlay; renaming does not add peripheral support.

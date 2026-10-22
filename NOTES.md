@@ -1,4 +1,23 @@
-# iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
+# XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
+
+## BERYLLIUM NAMING — 2026-10-22
+
+- Replaced upstream Redmi front-page claims with Poco-specific evidence and limitations.
+- Maintained emulator entry point is tools/qemu-beryllium.py, defaulting to Poco;
+  qemu-sweet.py retains the original profile as a compatibility wrapper.
+- Added tracked tools/beryllium-init.S with the hardware-confirmed POCO test messages.
+- Target-only overlay 0085 changes 96 diagnostic labels across 21 reused/adapted
+  components to BERYLLIUM. It leaves machine flags, classes, symbols, boot arguments,
+  ADT matches and payload magic intact. Unported hardware drivers remain upstream.
+- Hardware target now defaults to beryllium in CI. Existing kernel/screenshot results
+  predate 0085; do not claim the new labels were observed on hardware or in QEMU.
+- Validation: all four overlays apply sequentially with git apply; generator asserts
+  non-string source and compatibility identifiers are unchanged. FDT (6), payload
+  (7), sparse (3), graphics/panic-label (3) tests pass; both QEMU command entries
+  show help; Poco diagnostic assembles and wraps successfully. Local doc links and
+  git diff --check pass. No kernel rebuild or phone boot is claimed for 0085.
+- Older sections below are historical records, including upstream Redmi work and
+  superseded permissions/status; consult the newest handoff and Poco status matrix.
 
 ## WHOLE-FRAME GRAPHICS PASS — 2026-10-22
 

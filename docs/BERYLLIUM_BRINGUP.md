@@ -15,10 +15,13 @@ Detailed chronological hardware evidence and active handoff: [NOTES.md](../NOTES
 
 ## Device-free regression
 
-```
+```sh
+mkdir -p shim/out/beryllium-xnu
+clang -target arm64-apple-ios16.0 -c tools/beryllium-init.S -o shim/out/beryllium-xnu/poco-init.o
+python3 tools/mkinit.py shim/out/beryllium-xnu/poco-init.o shim/out/beryllium-xnu/poco-init
 python3 tools/mkberylliumqemuadt.py shim/out/beryllium-xnu/qemu.adt
 python3 tools/mkpayload.py xnu/out-beryllium-0083/kernel.development.sweet shim/out/beryllium-xnu/qemu.adt shim/out/beryllium-xnu/payload-qemu.bin --ramdisk shim/out/beryllium-xnu/poco-init --cmdline 'debug=0xc serial=3 cpus=1 rd=md0 keepsyms=1 sweettouch=0 sweetkeys=0 sweetusb=0'
-python3 tools/qemu-sweet.py shim/out/beryllium-xnu/payload-qemu.bin research/qemu-beryllium --profile beryllium --secs 60 --kernel xnu/out-beryllium-0083/kernel.development.sweet --fail-on-panic --expect-text 'POCO test userspace: init running as PID 1' --expect-text 'POCO test init: still alive'
+python3 tools/qemu-beryllium.py shim/out/beryllium-xnu/payload-qemu.bin research/qemu-beryllium --profile beryllium --secs 60 --kernel xnu/out-beryllium-0083/kernel.development.sweet --fail-on-panic --expect-text 'POCO test userspace: init running as PID 1' --expect-text 'POCO test init: still alive'
 ```
 
 Use the exact matching kernel artifact; 0082 fixes early framebuffer placement,
@@ -71,3 +74,12 @@ reads a non-sparse image into a string and produces the observed error text when
 that fails; it skips that path for sparse files. This explains a likely host-side
 cause, but a successful future device flash is still needed to confirm resolution.
 The sparse format is checked against [AOSP sparse_format.h](https://android.googlesource.com/platform/system/core/+/refs/heads/main/libsparse/sparse_format.h).
+
+## Target naming
+
+Poco-facing tooling is named `beryllium`; the emulator defaults to that profile.
+Overlay 0085 relabels adapted/reused kernel diagnostics as `BERYLLIUM`. Existing
+artifacts and recorded screen evidence predate it. Shared `SWEET` machine config,
+`kernel.development.sweet`, internal classes, ADT matches, payload magic and legacy
+boot arguments remain compatible; see the [README](../README.md). Historical
+Redmi hardware drivers are not relabelled as completed Poco drivers.

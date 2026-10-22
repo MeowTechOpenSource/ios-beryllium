@@ -1,0 +1,831 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -76,7 +76,7 @@
+ 	/* MPIDR Aff1 = core: 0x000-0x500 A55, 0x600/0x700 A76 */
+ 	if (cpu->phys_id > 0x700 || (cpu->phys_id & 0xff) != 0 ||
+ 	    topology->num_cpus > SWEET_SMP_MAX_CPUS) {
+-		panic("SWEET CPU: invalid topology cpu=%u mpidr=0x%x count=%u",
++		panic("BERYLLIUM CPU: invalid topology cpu=%u mpidr=0x%x count=%u",
+ 		    cpu->cpu_id, cpu->phys_id, topology->num_cpus);
+ 	}
+ 	if (!IOCPU::start(provider)) {
+@@ -101,10 +101,10 @@
+ 	perfmon_interrupt_handler_func pmi_handler = NULL;
+ 	kern_return_t result = ml_processor_register(&info, &machProcessor, &ipi_handler, &pmi_handler);
+ 	if (result != KERN_SUCCESS) {
+-		panic("SWEET CPU: ml_processor_register failed: %d", result);
++		panic("BERYLLIUM CPU: ml_processor_register failed: %d", result);
+ 	}
+ 	if (pmi_handler != NULL) {
+-		panic("SWEET CPU: PMI routing is not implemented");
++		panic("BERYLLIUM CPU: PMI routing is not implemented");
+ 	}
+ 
+ 	registerService();
+@@ -114,7 +114,7 @@
+ 		thread_t thread;
+ 		result = kernel_thread_start(&SweetCPU::startAll, NULL, &thread);
+ 		if (result != KERN_SUCCESS) {
+-			panic("SWEET CPU: cannot create startup thread: %d", result);
++			panic("BERYLLIUM CPU: cannot create startup thread: %d", result);
+ 		}
+ 		thread_deallocate(thread);
+ 	}
+@@ -128,7 +128,7 @@
+ 	const ml_topology_info_t *topology = ml_get_topology_info();
+ 	uint32_t requested = 1;
+ 	PE_parse_boot_argn("cpus", &requested, sizeof(requested));
+-	IOLog("SWEET CPU: requested=%u selected=%u (limit=%u)\n",
++	IOLog("BERYLLIUM CPU: requested=%u selected=%u (limit=%u)\n",
+ 	    requested, topology->num_cpus, SWEET_SMP_MAX_CPUS);
+ 
+ 	uint64_t deadline;
+@@ -137,35 +137,35 @@
+ 		if (mach_absolute_time() > deadline) {
+ 			for (unsigned int i = 0; i < topology->num_cpus; i++) {
+ 				if (__atomic_load_n(&sweet_cpus[i], __ATOMIC_ACQUIRE) == NULL) {
+-					IOLog("SWEET CPU: cpu=%u NOT registered (IOKit matching timeout)\n", i);
++					IOLog("BERYLLIUM CPU: cpu=%u NOT registered (IOKit matching timeout)\n", i);
+ 				}
+ 			}
+-			panic("SWEET CPU: CPU registration timeout");
++			panic("BERYLLIUM CPU: CPU registration timeout");
+ 		}
+ 		IOSleep(1);
+ 	}
+ 	/* The supplied ADT has cpu0 as the boot CPU and ascending A55 nodes. */
+ 	if (topology->boot_cpu->cpu_id != 0 || topology->boot_cpu->phys_id != 0) {
+-		panic("SWEET CPU: expected boot MPIDR 0 and logical CPU 0");
++		panic("BERYLLIUM CPU: expected boot MPIDR 0 and logical CPU 0");
+ 	}
+ 	for (unsigned int i = 0; i < topology->num_cpus; i++) {
+ 		SweetCPU *cpu = __atomic_load_n(&sweet_cpus[i], __ATOMIC_ACQUIRE);
+ 		kern_return_t kr = processor_start(cpu->machProcessor);
+ 		if (kr != KERN_SUCCESS) {
+-			panic("SWEET CPU: cpu=%u processor_start failed: %d", i, kr);
++			panic("BERYLLIUM CPU: cpu=%u processor_start failed: %d", i, kr);
+ 		}
+ 		/* processor_start() is asynchronous for secondaries in this XNU. */
+ 		nanoseconds_to_deadline(5 * NSEC_PER_SEC, &deadline);
+ 		while (__atomic_load_n(&cpu->initialized, __ATOMIC_ACQUIRE) == 0 ||
+ 		    !sweet_cpu_signal_is_enabled(i)) {
+ 			if (mach_absolute_time() > deadline) {
+-				IOLog("SWEET CPU: cpu=%u mpidr=0x%x NOT alive after 5s\n",
++				IOLog("BERYLLIUM CPU: cpu=%u mpidr=0x%x NOT alive after 5s\n",
+ 				    i, topology->cpus[i].phys_id);
+-				panic("SWEET CPU: cpu=%u startup timeout (reset/MMU/GIC/SGI)", i);
++				panic("BERYLLIUM CPU: cpu=%u startup timeout (reset/MMU/GIC/SGI)", i);
+ 			}
+ 			IOSleep(1);
+ 		}
+-		IOLog("SWEET CPU: cpu=%u mpidr=0x%x came alive; SGI1 OK\n",
++		IOLog("BERYLLIUM CPU: cpu=%u mpidr=0x%x came alive; SGI1 OK\n",
+ 		    i, topology->cpus[i].phys_id);
+ 	}
+ 	/* Publish exactly once, after every selected CPU has completed initCPU(). */
+@@ -173,7 +173,7 @@
+ 	__atomic_load_n(&sweet_cpus[topology->boot_cpu->cpu_id], __ATOMIC_ACQUIRE)->cpusRunning();
+ 	IOService::publishResource(gIOAllCPUInitializedKey, kOSBooleanTrue);
+ 	ml_set_max_cpus(topology->max_cpu_id + 1);
+-	IOLog("SWEET CPU: %u/%u CPUs initialized, SGI1 verified\n",
++	IOLog("BERYLLIUM CPU: %u/%u CPUs initialized, SGI1 verified\n",
+ 	    topology->num_cpus, topology->num_cpus);
+ 	thread_terminate(current_thread());
+ }
+@@ -189,7 +189,7 @@
+ SweetCPU::initCPU(bool boot)
+ {
+ 	if (!boot) {
+-		panic("SWEET CPU: cpu=%u resume is not implemented", getCPUNumber());
++		panic("BERYLLIUM CPU: cpu=%u resume is not implemented", getCPUNumber());
+ 	}
+ 	assert(cpu_number() == (int)getCPUNumber());
+ 
+@@ -200,7 +200,7 @@
+ 	 * Waiting here with DAIF.I set would deadlock every secondary. */
+ 	signalCPU(this);
+ 	setCPUState(kIOCPUStateRunning);
+-	kprintf("SWEET CPU: cpu=%u entered initCPU mpidr=0x%llx EL%llu IRQs=%u\n",
++	kprintf("BERYLLIUM CPU: cpu=%u entered initCPU mpidr=0x%llx EL%llu IRQs=%u\n",
+ 	    getCPUNumber(), __builtin_arm_rsr64("MPIDR_EL1") & 0xffffULL,
+ 	    __builtin_arm_rsr64("CurrentEL") >> 2, ml_get_interrupts_enabled());
+ 	__atomic_store_n(&initialized, 1, __ATOMIC_RELEASE);
+@@ -212,13 +212,13 @@
+ 	const ml_topology_info_t *topology = ml_get_topology_info();
+ 	unsigned int logical = target->getCPUNumber();
+ 	if (logical >= topology->num_cpus) {
+-		panic("SWEET CPU: invalid SGI target %u", logical);
++		panic("BERYLLIUM CPU: invalid SGI target %u", logical);
+ 	}
+ 	/* Use the TARGET affinity, including Aff1, never the sender's MPIDR. */
+ 	uint64_t mpidr = topology->cpus[logical].phys_id;
+ 	unsigned int aff0 = mpidr & 0xff;
+ 	if (aff0 >= 16) {
+-		panic("SWEET CPU: SGI target requires unsupported range selector");
++		panic("BERYLLIUM CPU: SGI target requires unsupported range selector");
+ 	}
+ 	uint64_t sgi = (((mpidr >> 32) & 0xff) << 48) |
+ 	    (((mpidr >> 16) & 0xff) << 32) |
+@@ -236,17 +236,17 @@
+ 	/* cpu_start() passes NULL,NULL: x20/x21 are set by LowResetVectorBase. */
+ 	if (start_paddr != 0 || arg_paddr != 0 || cpu->phys_id == 0 ||
+ 	    __atomic_load_n(&initialized, __ATOMIC_ACQUIRE) != 0) {
+-		panic("SWEET CPU: cpu=%u unsupported restart", getCPUNumber());
++		panic("BERYLLIUM CPU: cpu=%u unsupported restart", getCPUNumber());
+ 	}
+ 	vm_offset_t entry = ml_static_vtop((vm_offset_t)&sweet_secondary_entry);
+-	IOLog("SWEET CPU: cpu=%u CPU_ON target=0x%x entry_pa=0x%llx context=%u\n",
++	IOLog("BERYLLIUM CPU: cpu=%u CPU_ON target=0x%x entry_pa=0x%llx context=%u\n",
+ 	    getCPUNumber(), cpu->phys_id, (uint64_t)entry, getCPUNumber());
+ 	__builtin_arm_dsb(DSB_SY);
+ 	int32_t rc = sweet_psci_cpu_on(cpu->phys_id, entry, getCPUNumber());
+-	IOLog("SWEET CPU: cpu=%u PSCI CPU_ON rc=%d\n", getCPUNumber(), rc);
++	IOLog("BERYLLIUM CPU: cpu=%u PSCI CPU_ON rc=%d\n", getCPUNumber(), rc);
+ 	/* cpu_start() discards PE_cpu_start's return; do not silently carry on. */
+ 	if (rc != 0) {
+-		panic("SWEET CPU: cpu=%u NOT alive: PSCI CPU_ON rc=%d", getCPUNumber(), rc);
++		panic("BERYLLIUM CPU: cpu=%u NOT alive: PSCI CPU_ON rc=%d", getCPUNumber(), rc);
+ 	}
+ 	return KERN_SUCCESS;
+ }
+@@ -254,13 +254,13 @@
+ void
+ SweetCPU::quiesceCPU(void)
+ {
+-	panic("SWEET CPU: CPU quiesce is not implemented");
++	panic("BERYLLIUM CPU: CPU quiesce is not implemented");
+ }
+ 
+ void
+ SweetCPU::haltCPU(void)
+ {
+-	panic("SWEET CPU: CPU halt/suspend is not implemented");
++	panic("BERYLLIUM CPU: CPU halt/suspend is not implemented");
+ }
+ 
+ const OSSymbol *
+--- a/iokit/Kernel/arm/SweetPlatformExpert.cpp
++++ b/iokit/Kernel/arm/SweetPlatformExpert.cpp
+@@ -25,12 +25,12 @@
+ bool
+ SweetPlatformExpert::start(IOService *provider)
+ {
+-	IOLog("SWEET: starting device-tree platform expert\n");
++	IOLog("BERYLLIUM: starting device-tree platform expert\n");
+ 	if (!IODTPlatformExpert::start(provider)) {
+ 		return false;
+ 	}
+ 	registerService();
+-	IOLog("SWEET: platform expert registered\n");
++	IOLog("BERYLLIUM: platform expert registered\n");
+ 	return true;
+ }
+ 
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -164,7 +164,7 @@
+ 	fHeight = (uint32_t)video.v_height;
+ 	fRowBytes = (uint32_t)video.v_rowBytes;
+ 	if (fPhys == 0 || fWidth == 0 || fHeight == 0 || fRowBytes < fWidth * 4) {
+-		IOLog("SWEET FB: no boot framebuffer\n");
++		IOLog("BERYLLIUM FB: no boot framebuffer\n");
+ 		return false;
+ 	}
+ 	int native = 0;
+@@ -183,14 +183,14 @@
+ 	fPixels = fSurface != NULL ? fSurface->kernelAddress() : 0;
+ 	fWorkLoop = IOWorkLoop::workLoop();
+ 	if (fLock == NULL || fClients == NULL || fPixels == 0 || fWorkLoop == NULL) {
+-		IOLog("SWEET FB: setup failed\n");
++		IOLog("BERYLLIUM FB: setup failed\n");
+ 		OSSafeReleaseNULL(fSurface);    /* stays published: also held by the table */
+ 		OSSafeReleaseNULL(fWorkLoop);
+ 		return false;
+ 	}
+ 	fVsync = IOTimerEventSource::timerEventSource(this, &AppleCLCD::vsyncFired);
+ 	if (fVsync == NULL || fWorkLoop->addEventSource(fVsync) != kIOReturnSuccess) {
+-		IOLog("SWEET FB: no vsync timer\n");
++		IOLog("BERYLLIUM FB: no vsync timer\n");
+ 		return false;
+ 	}
+ 	uint32_t hz = 10;
+@@ -211,7 +211,7 @@
+ 	setProperty("external", false);
+ 	setProperty("DisplayPipePlaneBaseAlignment", 64ULL, 32);
+ 	registerService();
+-	IOLog("SWEET FB: AppleCLCD %ux%u stride %u at 0x%llx, default surface %u, presented as %ux%u\n",
++	IOLog("BERYLLIUM FB: AppleCLCD %ux%u stride %u at 0x%llx, default surface %u, presented as %ux%u\n",
+ 	    fWidth, fHeight, fRowBytes, fPhys, fSurface->id, fLogicalW, fLogicalH);
+ 	return true;
+ }
+@@ -314,7 +314,7 @@
+ 	fDirty = true;
+ 	IOLockUnlock(fLock);
+ 	if ((++sweet_fb_swap_count % 1000) == 0) {
+-		IOLog("SWEET FB: %llu swaps\n", sweet_fb_swap_count);
++		IOLog("BERYLLIUM FB: %llu swaps\n", sweet_fb_swap_count);
+ 	}
+ }
+ 
+@@ -348,7 +348,7 @@
+ 		SweetSurface *s = sweet_surface_copy(id);
+ 		if (sweet_fb_swaps_logged < 16) {
+ 			sweet_fb_swaps_logged++;
+-			IOLog("SWEET FB: swap %u layer %u surface %u %ux%u fmt 0x%x bpr %u a %d,%d %ux%u b %d,%d %dx%d\n",
++			IOLog("BERYLLIUM FB: swap %u layer %u surface %u %ux%u fmt 0x%x bpr %u a %d,%d %ux%u b %d,%d %dx%d\n",
+ 			    get32(rec, 0x50), layer, id, s ? s->width : 0, s ? s->height : 0,
+ 			    s ? s->pixelFormat : 0, s ? s->bytesPerRow : 0, sx, sy, get32(a, 8),
+ 			    get32(a, 12), dx, dy, w, h);
+@@ -538,7 +538,7 @@
+ 			IOLockUnlock(fFB->fLock);
+ 			char name[32];
+ 			proc_selfname(name, sizeof(name));
+-			IOLog("SWEET FB: %s notifications type %u %s\n", name, type,
++			IOLog("BERYLLIUM FB: %s notifications type %u %s\n", name, type,
+ 			    args->scalarInput[0] ? "on" : "off");
+ 		}
+ 		break;
+@@ -552,7 +552,7 @@
+ 				fFB->fDirty = true;     /* on: redraw the latest frame */
+ 			}
+ 			IOLockUnlock(fFB->fLock);
+-			IOLog("SWEET FB: display %s\n", off ? "off" : "on");
++			IOLog("BERYLLIUM FB: display %s\n", off ? "off" : "on");
+ 		}
+ 		break;
+ 	case kSweetFBSwapWait:
+@@ -572,7 +572,7 @@
+ 		}
+ 		char name[32];
+ 		proc_selfname(name, sizeof(name));
+-		IOLog("SWEET FB: %s sel %u in %u/%u out %u/%u -> 0x%x\n", name, selector,
++		IOLog("BERYLLIUM FB: %s sel %u in %u/%u out %u/%u -> 0x%x\n", name, selector,
+ 		    args->scalarInputCount, args->structureInputSize,
+ 		    args->scalarOutputCount, args->structureOutputSize, ret);
+ 	}
+--- a/iokit/Kernel/arm/SweetWatchdog.cpp
++++ b/iokit/Kernel/arm/SweetWatchdog.cpp
+@@ -49,7 +49,7 @@
+ 	setProperty(kIOUserClientClassKey, "IOWatchdogUserClient");
+ 	setProperty("IOPMUPrimary", 1ULL, 32);
+ 	registerService();
+-	IOLog("SWEET WDT: IOWatchdog registered (accepts check-ins, never fires)\n");
++	IOLog("BERYLLIUM WDT: IOWatchdog registered (accepts check-ins, never fires)\n");
+ 	return true;
+ }
+ 
+@@ -98,7 +98,7 @@
+ 		}
+ 		char name[32];
+ 		proc_selfname(name, sizeof(name));
+-		IOLog("SWEET WDT: %s sel %u in %u/%u out %u/%u -> ok\n", name, selector,
++		IOLog("BERYLLIUM WDT: %s sel %u in %u/%u out %u/%u -> ok\n", name, selector,
+ 		    args->scalarInputCount, args->structureInputSize,
+ 		    args->scalarOutputCount, args->structureOutputSize);
+ 	}
+--- a/iokit/Kernel/arm/SweetKeyStore.cpp
++++ b/iokit/Kernel/arm/SweetKeyStore.cpp
+@@ -76,7 +76,7 @@
+ 	}
+ 	setProperty(kIOUserClientClassKey, "AppleKeyStoreUserClient");
+ 	registerService();
+-	IOLog("SWEET AKS: AppleKeyStore registered (no passcode, unlocked)\n");
++	IOLog("BERYLLIUM AKS: AppleKeyStore registered (no passcode, unlocked)\n");
+ 	return true;
+ }
+ 
+@@ -234,7 +234,7 @@
+ 
+ 	char name[32];
+ 	proc_selfname(name, sizeof(name));
+-	IOLog("SWEET AKS: %s sel %u arg0 %llu in %u/%u out %u/%u -> 0x%x\n", name, selector,
++	IOLog("BERYLLIUM AKS: %s sel %u arg0 %llu in %u/%u out %u/%u -> 0x%x\n", name, selector,
+ 	    arg0, in_scalars, in_struct, out_scalars, out_struct, ret);
+ 	return ret;
+ }
+--- a/iokit/Kernel/arm/SweetSurface.cpp
++++ b/iokit/Kernel/arm/SweetSurface.cpp
+@@ -395,7 +395,7 @@
+ 	sweet_surface_init_lock();
+ 	setProperty(kIOUserClientClassKey, "IOSurfaceRootUserClient");
+ 	registerService();
+-	IOLog("SWEET SURF: IOCoreSurfaceRoot registered\n");
++	IOLog("BERYLLIUM SURF: IOCoreSurfaceRoot registered\n");
+ 	return true;
+ }
+ 
+@@ -440,7 +440,7 @@
+ 	sweet_surf_logged |= 1ULL << bit;
+ 	char name[32];
+ 	proc_selfname(name, sizeof(name));
+-	IOLog("SWEET SURF: %s %s %u\n", name, what, n);
++	IOLog("BERYLLIUM SURF: %s %s %u\n", name, what, n);
+ }
+ 
+ bool
+@@ -673,7 +673,7 @@
+ 	OSDictionary *props = OSDynamicCast(OSDictionary, obj);
+ 	if (props == NULL) {
+ 		OSSafeReleaseNULL(obj);
+-		IOLog("SWEET SURF: create: bad property dictionary (%u bytes)\n", len);
++		IOLog("BERYLLIUM SURF: create: bad property dictionary (%u bytes)\n", len);
+ 		return kIOReturnBadArgument;
+ 	}
+ 
+@@ -707,7 +707,7 @@
+ 		char name[32];
+ 		proc_selfname(name, sizeof(name));
+ 		sweet_surface_creates_logged++;
+-		IOLog("SWEET SURF: %s create id %u %ux%u fmt 0x%x bpe %u bpr %u planes %u size %u keys %u -> 0x%x\n",
++		IOLog("BERYLLIUM SURF: %s create id %u %ux%u fmt 0x%x bpe %u bpr %u planes %u size %u keys %u -> 0x%x\n",
+ 		    name, s->id, s->width, s->height, s->pixelFormat, s->bytesPerElement,
+ 		    s->bytesPerRow, s->planeCount, s->allocSize, props->getCount(), ret);
+ 	}
+--- a/iokit/Kernel/arm/SweetBattery.cpp
++++ b/iokit/Kernel/arm/SweetBattery.cpp
+@@ -153,7 +153,7 @@
+ 	updateStatus(); /* Flush PS properties and send 0xe0024100 on change. */
+ 	int mode = measured ? 1 : 0;
+ 	if (mode != fLastMode) {
+-		IOLog("SWEET BATTERY: %s, %u%% %umV external=%d charging=%d\n",
++		IOLog("BERYLLIUM BATTERY: %s, %u%% %umV external=%d charging=%d\n",
+ 		    measured ? "PM6150 / estimated SOC" : "static fallback",
+ 		    percent, mv, external, charging);
+ 		fLastMode = mode;
+@@ -277,7 +277,7 @@
+ 		} else {
+ 			fReal = false;
+ 			poll();
+-			IOLog("SWEET BATTERY: timer unavailable; static fallback\n");
++			IOLog("BERYLLIUM BATTERY: timer unavailable; static fallback\n");
+ 		}
+ 	}
+ 	registerService();
+--- a/iokit/Kernel/arm/hid/SweetHID.cpp
++++ b/iokit/Kernel/arm/hid/SweetHID.cpp
+@@ -129,7 +129,7 @@
+ 		ok = super::open(client, options, data);
+ 	}
+ 	OSSafeReleaseNULL(data);
+-	IOLog("SWEET HID: %s open by %s -> %d\n", getName(), client ? client->getName() : "?", ok);
++	IOLog("BERYLLIUM HID: %s open by %s -> %d\n", getName(), client ? client->getName() : "?", ok);
+ 	return ok;
+ }
+ 
+@@ -297,7 +297,7 @@
+ 	IOUserClient *client;
+ 
+ 	if (type != kIOHIDEventServiceUserClientType) {
+-		IOLog("SWEET HID: %s user client type 0x%x unsupported\n", getName(), (unsigned)type);
++		IOLog("BERYLLIUM HID: %s user client type 0x%x unsupported\n", getName(), (unsigned)type);
+ 		return super::newUserClient(owningTask, securityID, type, properties, handler);
+ 	}
+ 	client = OSTypeAlloc(IOHIDEventServiceUserClient);
+@@ -306,7 +306,7 @@
+ 	}
+ 	if (!client->initWithTask(owningTask, securityID, type)) {
+ 		client->release();
+-		IOLog("SWEET HID: %s user client init refused\n", getName());
++		IOLog("BERYLLIUM HID: %s user client init refused\n", getName());
+ 		return kIOReturnBadArgument;
+ 	}
+ 	if (!client->attach(this)) {
+@@ -393,7 +393,7 @@
+ 	}
+ 	gSweetButtons = this;
+ 	registerService();
+-	IOLog("SWEET HID: buttons registered (test every %u s)\n", fTestSecs);
++	IOLog("BERYLLIUM HID: buttons registered (test every %u s)\n", fTestSecs);
+ 	return true;
+ }
+ 
+@@ -403,7 +403,7 @@
+ 	IOHIDEvent *event = IOHIDEvent::keyboardEvent(mach_absolute_time(), kHIDPage_Consumer, usage, down);
+ 
+ 	if (event) {
+-		IOLog("SWEET HID: key 0x%x %s (%u clients)\n", (unsigned)usage, down ? "down" : "up",
++		IOLog("BERYLLIUM HID: key 0x%x %s (%u clients)\n", (unsigned)usage, down ? "down" : "up",
+ 		    _clients ? _clients->getCount() : 0);
+ 		dispatchEvent(event);
+ 		event->release();
+@@ -453,7 +453,7 @@
+ 	setProperty("SurfaceHeight", (unsigned long long)(151 << 16), 32);
+ 	gSweetTouch = this;
+ 	registerService();
+-	IOLog("SWEET HID: touch registered\n");
++	IOLog("BERYLLIUM HID: touch registered\n");
+ 	return true;
+ }
+ 
+@@ -540,7 +540,7 @@
+ 	IOLockUnlock(fLock);
+ 
+ 	if (was != down) {
+-		IOLog("SWEET HID: touch %d %s at %d,%d%s\n", finger, down ? "down" : "up", x, y,
++		IOLog("BERYLLIUM HID: touch %d %s at %d,%d%s\n", finger, down ? "down" : "up", x, y,
+ 		    fEdge[finger] ? " edge" : "");
+ 	}
+ 	dispatchEvent(collection);
+--- a/pexpert/arm/pe_fiq.c
++++ b/pexpert/arm/pe_fiq.c
+@@ -116,7 +116,7 @@
+ 			}
+ 			sweet_vtimer_intid = intid;
+ 		}
+-		kprintf("SWEET GIC: virtual timer INTID %u\n", sweet_vtimer_intid);
++		kprintf("BERYLLIUM GIC: virtual timer INTID %u\n", sweet_vtimer_intid);
+ #endif
+ 
+ 		vm_offset_t soc_base_phys = pe_arm_get_soc_base_phys();
+--- a/bsd/netinet/in.c
++++ b/bsd/netinet/in.c
+@@ -1218,7 +1218,7 @@
+ 			const uint8_t *a = (const uint8_t *)&((struct in_aliasreq *)(void *)data)->ifra_addr.sin_addr;
+ 			char pname[20];
+ 			proc_name(proc_pid(p), pname, sizeof(pname));
+-			printf("SWEET NET: %s %s %s %u.%u.%u.%u\n", pname, if_name(ifp),
++			printf("BERYLLIUM NET: %s %s %s %u.%u.%u.%u\n", pname, if_name(ifp),
+ 			    cmd == SIOCAIFADDR ? "add address" : "delete address", a[0], a[1], a[2], a[3]);
+ 		}
+ 	}
+--- a/bsd/net/rtsock.c
++++ b/bsd/net/rtsock.c
+@@ -522,7 +522,7 @@
+ 			    (const uint8_t *)&SIN(info.rti_info[RTAX_GATEWAY])->sin_addr : NULL;
+ 			char pname[20];
+ 			proc_selfname(pname, sizeof(pname));
+-			printf("SWEET NET: %s route %s %u.%u.%u.%u gw %u.%u.%u.%u ifindex %u flags 0x%x\n", pname,
++			printf("BERYLLIUM NET: %s route %s %u.%u.%u.%u gw %u.%u.%u.%u ifindex %u flags 0x%x\n", pname,
+ 			    rtm->rtm_type == RTM_ADD ? "add" : rtm->rtm_type == RTM_DELETE ? "delete" : "change",
+ 			    d[0], d[1], d[2], d[3], g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0,
+ 			    rtm->rtm_index, rtm->rtm_flags);
+--- a/osfmk/arm64/sweet_early.c
++++ b/osfmk/arm64/sweet_early.c
+@@ -99,7 +99,7 @@
+ 		}
+ 	}
+ 	__asm__ volatile("dsb sy" ::: "memory");
+-	sweet_early_string("SWEET EARLY ");
++	sweet_early_string("BERYLLIUM EARLY ");
+ 	if (stage >= 10) {
+ 		sweet_early_putc((char)('0' + stage / 10));
+ 	}
+@@ -116,7 +116,7 @@
+ 		return;
+ 	}
+ 	early_panicking = 1;
+-	sweet_early_string("\nSWEET EARLY PANIC: ");
++	sweet_early_string("\nBERYLLIUM EARLY PANIC: ");
+ 	va_list copy;
+ 	va_copy(copy, *args);
+ 	_doprnt(fmt, &copy, sweet_early_putc, 16);
+--- a/osfmk/prng/prng_random.c
++++ b/osfmk/prng/prng_random.c
+@@ -177,7 +177,7 @@
+ sweet_prng_check(int status)
+ {
+ 	if (status != CCDRBG_STATUS_OK) {
+-		panic("SWEET HMAC DRBG error %d", status);
++		panic("BERYLLIUM HMAC DRBG error %d", status);
+ 	}
+ }
+ 
+@@ -236,7 +236,7 @@
+ 	size_t nbytes = sizeof(entropy);
+ 	int32_t nsamples = sweet_getentropy(&nbytes, entropy, sweet_getentropy_arg);
+ 	if (nsamples < 0) {
+-		panic("SWEET PRNG entropy health test failed");
++		panic("BERYLLIUM PRNG entropy health test failed");
+ 	}
+ 	if (nsamples >= 256) {
+ 		assert(nbytes >= SEED_SIZE && nbytes <= sizeof(entropy));
+@@ -274,7 +274,7 @@
+ 		.init_with_getentropy = sweet_prng_init_with_getentropy,
+ 	};
+ 	register_and_init_prng(&sweet_prng_ctx, &funcs);
+-	kprintf("SWEET PRNG: HMAC-SHA256 registered\n");
++	kprintf("BERYLLIUM PRNG: HMAC-SHA256 registered\n");
+ }
+ STARTUP(EARLY_BOOT, STARTUP_RANK_FIRST, sweet_prng_startup);
+ #endif /* SWEET */
+--- a/iokit/bsddev/IOKitBSDInit.cpp
++++ b/iokit/bsddev/IOKitBSDInit.cpp
+@@ -775,7 +775,7 @@
+ 		OSSafeReleaseNULL(matching);
+ 		int ufs_error = sweet_ufs_rootdev(root);
+ 		if (ufs_error) {
+-			panic("IOFindBSDRoot: SWEET UFS root %s unavailable: %d", rdBootVar, ufs_error);
++			panic("IOFindBSDRoot: BERYLLIUM UFS root %s unavailable: %d", rdBootVar, ufs_error);
+ 		}
+ 		strlcpy(rootName, rdBootVar, rootNameSize);
+ 		IOLog("BSD root: %s, major %d, minor %d\n", rootName, major(*root), minor(*root));
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -940,7 +940,7 @@
+ 			 * cannot be a sealed volume. Report it instead of panicking.
+ 			 */
+ 			if (autherr) {
+-				printf("SWEET: root volume is not authenticated (error %d); continuing unsealed\n", autherr);
++				printf("BERYLLIUM: root volume is not authenticated (error %d); continuing unsealed\n", autherr);
+ 			}
+ #else
+ 			if (autherr) {
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -74,7 +74,7 @@
+     __unused uint8_t cdhash[CS_CDHASH_LEN], __unused CEQuery_t query,
+     __unused size_t query_length)
+ {
+-	panic("SWEET AMFI: CoreEntitlements queries are not implemented");
++	panic("BERYLLIUM AMFI: CoreEntitlements queries are not implemented");
+ }
+ 
+ static bool
+@@ -106,7 +106,7 @@
+ static void *
+ sweet_amfi_query_context_to_object(__unused CEQueryContext_t ctx)
+ {
+-	panic("SWEET AMFI: CoreEntitlements query contexts are not implemented");
++	panic("BERYLLIUM AMFI: CoreEntitlements query contexts are not implemented");
+ }
+ 
+ static kern_return_t
+@@ -132,7 +132,7 @@
+ 	size_t xml_len = 0;
+ 
+ 	if (csblob_get_entitlements(code_signing_blob, &xml, &xml_len) != 0) {
+-		printf("SWEET AMFI: %s: entitlements do not match the code directory, granting none\n",
++		printf("BERYLLIUM AMFI: %s: entitlements do not match the code directory, granting none\n",
+ 		    csblob_get_identity(code_signing_blob));
+ 		return;
+ 	}
+@@ -141,13 +141,13 @@
+ 	}
+ 	void *ent = sweet_entitlements_create(xml, xml_len);
+ 	if (ent == NULL) {
+-		printf("SWEET AMFI: %s: unreadable entitlements (%zu bytes), granting none\n",
++		printf("BERYLLIUM AMFI: %s: unreadable entitlements (%zu bytes), granting none\n",
+ 		    csblob_get_identity(code_signing_blob), xml_len);
+ 		return;
+ 	}
+ 	if (sweet_amfi_debug) {
+ 		/* The test keys only exist in tools/mkinit.py test signatures. */
+-		printf("SWEET AMFI: %s: %u entitlements (test: bool %d string %d array %d)\n",
++		printf("BERYLLIUM AMFI: %s: %u entitlements (test: bool %d string %d array %d)\n",
+ 		    csblob_get_identity(code_signing_blob), sweet_entitlements_count(ent),
+ 		    sweet_entitlements_bool(ent, "com.apple.private.sweet.test-bool"),
+ 		    sweet_entitlements_string(ent, "com.apple.private.sweet.test-string", "hello"),
+@@ -243,7 +243,7 @@
+ sweet_amfi_register(void)
+ {
+ 	amfi_interface_register(&sweet_amfi);
+-	printf("SWEET AMFI: built-in interface registered (XML entitlements)\n");
++	printf("BERYLLIUM AMFI: built-in interface registered (XML entitlements)\n");
+ }
+ STARTUP(EARLY_BOOT, STARTUP_RANK_MIDDLE, sweet_amfi_register);
+ 
+@@ -292,7 +292,7 @@
+ 		sweet_sandbox_seen |= 1ULL << call;
+ 		char name[32];
+ 		proc_name(proc_pid(p), name, sizeof(name));
+-		printf("SWEET Sandbox: %s op %d\n", name, call);
++		printf("BERYLLIUM Sandbox: %s op %d\n", name, call);
+ 	}
+ 	switch (call) {
+ 	case 4:         /* container path (audit token / pid) */
+@@ -341,7 +341,7 @@
+ 		sweet_priv_logged[sweet_priv_logged_count].priv = priv;
+ 		strlcpy(sweet_priv_logged[sweet_priv_logged_count].name, name, sizeof(name));
+ 		sweet_priv_logged_count++;
+-		printf("SWEET Sandbox: %s privilege %d denied\n", name, priv);
++		printf("BERYLLIUM Sandbox: %s privilege %d denied\n", name, priv);
+ 	}
+ 	return EPERM;
+ }
+@@ -353,15 +353,15 @@
+ 
+ static struct mac_policy_conf sweet_sandbox_mac_conf = {
+ 	.mpc_name = "Sandbox",
+-	.mpc_fullname = "SWEET permissive sandbox stand-in",
++	.mpc_fullname = "BERYLLIUM permissive sandbox stand-in",
+ 	.mpc_ops = &sweet_sandbox_mac_ops,
+ };
+ 
+ static mac_policy_handle_t sweet_sandbox_mac_handle;
+ 
+ static struct mac_policy_conf sweet_amfi_mac_conf = {
+-	.mpc_name = "SWEET AMFI",
+-	.mpc_fullname = "SWEET built-in Mobile File Integrity",
++	.mpc_name = "BERYLLIUM AMFI",
++	.mpc_fullname = "BERYLLIUM built-in Mobile File Integrity",
+ 	.mpc_ops = &sweet_amfi_mac_ops,
+ };
+ 
+@@ -374,10 +374,10 @@
+ sweet_amfi_policy_register(void)
+ {
+ 	int error = mac_policy_register(&sweet_amfi_mac_conf, &sweet_amfi_mac_handle, NULL);
+-	printf("SWEET AMFI: platform binary policy %s (%d)\n",
++	printf("BERYLLIUM AMFI: platform binary policy %s (%d)\n",
+ 	    error ? "NOT registered" : "registered", error);
+ 	error = mac_policy_register(&sweet_sandbox_mac_conf, &sweet_sandbox_mac_handle, NULL);
+-	printf("SWEET Sandbox: permissive policy %s (%d)\n",
++	printf("BERYLLIUM Sandbox: permissive policy %s (%d)\n",
+ 	    error ? "NOT registered" : "registered", error);
+ }
+ #endif /* ARM64_BOARD_CONFIG_SWEET */
+--- a/bsd/kern/kern_trustcache.c
++++ b/bsd/kern/kern_trustcache.c
+@@ -258,7 +258,7 @@
+ 	if (img4if == NULL || amfi == NULL) {
+ 		trust_cache_rt = NULL;
+ 		trust_cache_mut_rt = NULL;
+-		printf("SWEET: trust caches unavailable (Image4/AMFI not installed)\n");
++		printf("BERYLLIUM: trust caches unavailable (Image4/AMFI not installed)\n");
+ 		return;
+ 	}
+ #endif
+--- a/bsd/pthread/sweet_pthread_init.c
++++ b/bsd/pthread/sweet_pthread_init.c
+@@ -5,7 +5,7 @@
+ 
+ /* Keep the provider's full layout within the kernel's reserved storage. */
+ _Static_assert(sizeof(struct ksyn_waitq_element) == 56,
+-    "update SWEET ksyn storage in sys/pthread_internal.h");
++    "update BERYLLIUM ksyn storage in sys/pthread_internal.h");
+ 
+ /* Restore the startup interface after compiling the provider's kext code. */
+ #define XNU_KERNEL_PRIVATE 1
+@@ -18,9 +18,9 @@
+ {
+     kern_return_t kr = sweet_pthread_start(NULL, NULL);
+     if (kr != KERN_SUCCESS || sweet_pthread_kern == NULL) {
+-        panic("SWEET: pthread provider registration failed: %d", kr);
++        panic("BERYLLIUM: pthread provider registration failed: %d", kr);
+     }
+-    kprintf("SWEET pthread: libpthread-514.100.2 registered\n");
++    kprintf("BERYLLIUM pthread: libpthread-514.100.2 registered\n");
+ }
+ STARTUP(EARLY_BOOT, STARTUP_RANK_SECOND, sweet_pthread_register);
+ #endif /* ARM64_BOARD_CONFIG_SWEET */
+--- a/bsd/sweet_hfs/sweet_hfs_iokit.c
++++ b/bsd/sweet_hfs/sweet_hfs_iokit.c
+@@ -80,7 +80,7 @@
+ 
+ 	int ret = vfs_fsadd(&vfe, &sweet_hfs_vfs_handle);
+ 	if (ret) {
+-		panic("SWEET HFS: vfs_fsadd failed: %d", ret);
++		panic("BERYLLIUM HFS: vfs_fsadd failed: %d", ret);
+ 	}
+ 
+ 	hfs_init_zones();
+@@ -98,7 +98,7 @@
+ 		}
+ 	}
+ 
+-	printf("SWEET HFS: hfs-627.100.6 registered\n");
++	printf("BERYLLIUM HFS: hfs-627.100.6 registered\n");
+ }
+ 
+ /* Built in, not a loadable kext: there is no kext to retain per mount. */
+--- a/bsd/sweet_hfs/core/hfs_vfsutils.c
++++ b/bsd/sweet_hfs/core/hfs_vfsutils.c
+@@ -208,7 +208,7 @@
+ 		 * there is no fsck_hfs before the root mount: take it anyway.
+ 		 */
+ 		if (vfs_flags(hfsmp->hfs_mp) & MNT_ROOTFS) {
+-			printf("hfs_mounthfsplus: SWEET: mounting dirty non-journaled root read-write\n");
++			printf("hfs_mounthfsplus: BERYLLIUM: mounting dirty non-journaled root read-write\n");
+ 		} else {
+ #endif
+ 		if (HFS_MOUNT_DEBUG) {
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -220,7 +220,7 @@
+ 		uint64_t now = mach_absolute_time();
+ 		if (now > deadline) {
+ 			ufs_wr(REG_UTRLCLR, ~1u);
+-			printf("SWEET UFS: command 0x%02x timed out\n", cdb[0]);
++			printf("BERYLLIUM UFS: command 0x%02x timed out\n", cdb[0]);
+ 			return ETIMEDOUT;
+ 		}
+ 		if (sleepable && now >= spin_until) {
+@@ -249,7 +249,7 @@
+ 
+ 	uint32_t ocs = utrd->dw2 & 0xff;
+ 	if (ocs || ucd->resp[0] != 0x21 || ucd->resp[6] || ucd->resp[7]) {
+-		printf("SWEET UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
++		printf("BERYLLIUM UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
+ 		    cdb[0], ocs, ucd->resp[0], ucd->resp[6], ucd->resp[7]);
+ 		return EIO;
+ 	}
+@@ -281,7 +281,7 @@
+ 	if (!su.writable || !su.nblocks || count == 0 || count > BOUNCE_SIZE / UFS_BLOCK ||
+ 	    lba < su.first_block || lba - su.first_block >= su.nblocks ||
+ 	    count > su.nblocks - (lba - su.first_block) || lba + count - 1 > UINT32_MAX) {
+-		printf("SWEET UFS: refusing write of %u blocks at 0x%llx\n", count, lba);
++		printf("BERYLLIUM UFS: refusing write of %u blocks at 0x%llx\n", count, lba);
+ 		return EPERM;
+ 	}
+ 	uint8_t cdb[10] = {
+@@ -308,7 +308,7 @@
+ 		return error;
+ 	}
+ 	if (memcmp(b, "EFI PART", 8) != 0) {
+-		printf("SWEET UFS: LUN %u has no GPT\n", su.lun);
++		printf("BERYLLIUM UFS: LUN %u has no GPT\n", su.lun);
+ 		return ENXIO;
+ 	}
+ 	uint64_t entry_lba;
+@@ -317,7 +317,7 @@
+ 	memcpy(&nent, b + 80, 4);
+ 	memcpy(&esz, b + 84, 4);
+ 	if (esz != 128 || nent == 0 || nent * esz > BOUNCE_SIZE) {
+-		printf("SWEET UFS: unsupported GPT entries %u x %u\n", nent, esz);
++		printf("BERYLLIUM UFS: unsupported GPT entries %u x %u\n", nent, esz);
+ 		return ENXIO;
+ 	}
+ 	error = ufs_read_blocks(entry_lba, (nent * esz + UFS_BLOCK - 1) / UFS_BLOCK);
+@@ -349,7 +349,7 @@
+ 		su.nblocks = last - first + 1;
+ 		return 0;
+ 	}
+-	printf("SWEET UFS: no GPT partition named \"%s\"\n", want);
++	printf("BERYLLIUM UFS: no GPT partition named \"%s\"\n", want);
+ 	return ENOENT;
+ }
+ 
+@@ -358,16 +358,16 @@
+ {
+ 	uint32_t hce = ufs_rd(REG_HCE), hcs = ufs_rd(REG_HCS);
+ 	if (!(hce & 1) || !(hcs & HCS_DP) || !(hcs & HCS_UTRLRDY)) {
+-		printf("SWEET UFS: host not ready (hce 0x%x hcs 0x%x)\n", hce, hcs);
++		printf("BERYLLIUM UFS: host not ready (hce 0x%x hcs 0x%x)\n", hce, hcs);
+ 		return ENXIO;
+ 	}
+ 	if (ufs_rd(REG_UTRLDBR)) {
+-		printf("SWEET UFS: requests outstanding from the bootloader\n");
++		printf("BERYLLIUM UFS: requests outstanding from the bootloader\n");
+ 		return EBUSY;
+ 	}
+ 	/* With RAM above 4 GiB (mkadt.py --highmem) the DMA memory can be there too. */
+ 	if (((su.dma_pa + DMA_SIZE - 1) >> 32) && !(ufs_rd(REG_CAP) & CAP_64AS)) {
+-		printf("SWEET UFS: DMA memory at 0x%llx but the host has no 64-bit addressing\n",
++		printf("BERYLLIUM UFS: DMA memory at 0x%llx but the host has no 64-bit addressing\n",
+ 		    su.dma_pa);
+ 		return ENXIO;
+ 	}
+@@ -381,7 +381,7 @@
+ 	/* Never ring a doorbell unless the host uses our list. */
+ 	if (ufs_rd(REG_UTRLBA) != (uint32_t)list || ufs_rd(REG_UTRLBAU) != (uint32_t)(list >> 32) ||
+ 	    !(ufs_rd(REG_UTRLRSR) & 1)) {
+-		printf("SWEET UFS: host did not take our request list\n");
++		printf("BERYLLIUM UFS: host did not take our request list\n");
+ 		return EIO;
+ 	}
+ 	return 0;
+@@ -595,7 +595,7 @@
+ 	if (SecureDTLookupEntry(NULL, "/sweet-ufs", &node) != kSuccess ||
+ 	    SecureDTGetProperty(node, "reg", (void const **)&reg, &size) != kSuccess ||
+ 	    size < 2 * sizeof(uintptr_t)) {
+-		printf("SWEET UFS: no /sweet-ufs node in the device tree\n");
++		printf("BERYLLIUM UFS: no /sweet-ufs node in the device tree\n");
+ 		return ENXIO;
+ 	}
+ 	PE_parse_boot_argn("ufsroot", want, sizeof(want));
+@@ -610,7 +610,7 @@
+ 	su.regs = ml_io_map(reg[0], reg[1]);
+ 	if (kmem_alloc_contig(kernel_map, &su.dma, DMA_SIZE, PAGE_MASK, 0, 0,
+ 	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
+-		printf("SWEET UFS: no contiguous DMA memory\n");
++		printf("BERYLLIUM UFS: no contiguous DMA memory\n");
+ 		return ENOMEM;
+ 	}
+ 	ppnum_t pn = pmap_find_phys(kernel_pmap, (addr64_t)su.dma);
+@@ -651,7 +651,7 @@
+ 	/* Only now, with the partition bounds known, can writes be allowed. */
+ 	su.writable = (rw != 0);
+ 	su.ready = true;
+-	printf("SWEET UFS: \"%s\" on LUN %u: first block 0x%llx, %llu MiB, %s, DMA at 0x%llx\n",
++	printf("BERYLLIUM UFS: \"%s\" on LUN %u: first block 0x%llx, %llu MiB, %s, DMA at 0x%llx\n",
+ 	    want, su.lun, su.first_block, su.nblocks * UFS_BLOCK >> 20,
+ 	    su.writable ? "read-write" : "read-only", su.dma_pa);
+ 	sweet_log_start();
+@@ -743,7 +743,7 @@
+ 	uint64_t flushed = 0, seq = 0;
+ 	void *bounce = (void *)(su.dma + DMA_BOUNCE);
+ 
+-	printf("SWEET LOG: console log to the last %u KiB of the partition (block 0x%llx)\n",
++	printf("BERYLLIUM LOG: console log to the last %u KiB of the partition (block 0x%llx)\n",
+ 	    SWEET_LOG_BLOCKS * UFS_BLOCK >> 10, base);
+ 	for (;;) {
+ 		(void)tsleep(&sweet_log_chan, PZERO, "sweetlog", hz * (int)sweet_log_secs);
+@@ -779,7 +779,7 @@
+ 		}
+ 		lck_mtx_unlock(&sweet_ufs_lock);
+ 		if (error) {
+-			printf("SWEET LOG: write failed (%d), stopping\n", error);
++			printf("BERYLLIUM LOG: write failed (%d), stopping\n", error);
+ 			return;
+ 		}
+ 		flushed = total;
