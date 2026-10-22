@@ -20,7 +20,7 @@ snapshot of the circular screen, not a complete boot log. --fail-on-panic
 returns 2 when a panic is visible; absence of a panic does not prove boot.
 An undecodable or blank screen returns 3 with --fail-on-panic.
 """
-import argparse, json, os, shutil, socket, struct, subprocess, sys, time, zlib
+import argparse, json, os, shutil, socket, struct, subprocess, sys, tempfile, time, zlib
 
 FB_BASE, FB_W, FB_H = 0x9c000000, 1080, 2400
 FB_STRIDE = FB_W * 4
@@ -60,7 +60,7 @@ def check_qemu_dependency(cpu='cortex-a76'):
 
 def check_kernel_tools(kernel_path):
     """Verify llvm-nm is available when --kernel is specified."""
-    if not shutil.which('llvm-nm'):
+    if not (shutil.which('llvm-nm') or shutil.which('xcrun')):
         print('[!] Error: llvm-nm not found in PATH, required for --kernel font extraction.', file=sys.stderr)
         print('    Install instructions:', file=sys.stderr)
         print('      Arch Linux:    sudo pacman -S llvm', file=sys.stderr)
@@ -223,12 +223,17 @@ def main():
     ap.add_argument('--secs', type=float, default=20, help='Duration to run QEMU in seconds (default: 20)')
     ap.add_argument('--gdb', action='store_true', help='start halted, gdb stub on :1234, no timeout')
     ap.add_argument('--hmp', action='append', default=[], help='extra monitor command run after stop (repeatable), e.g. "x /8gx 0xfffffe..."')
+    ap.add_argument('--profile', choices=['sweet', 'beryllium'], default='sweet',
+                    help='Framebuffer profile; virt does not emulate Poco peripherals')
     ap.add_argument('--cpu', default='cortex-a76', help='QEMU CPU model (default: cortex-a76)')
     ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (uses llvm-nm)')
     ap.add_argument('--fail-on-panic', action='store_true', help='exit 2 for a visible panic, 3 for incomplete/blank decoding; requires --kernel')
     ap.add_argument('--live-serial', action='store_true', help='stream serial console output to stdout in real time')
     ap.add_argument('--check-env', action='store_true', help='check QEMU installation and dependencies without running a payload')
     a = ap.parse_args()
+    global FB_BASE, FB_H
+    if a.profile == 'beryllium':
+        FB_BASE, FB_H = 0x9d400000, 2246
 
     if a.check_env:
         ok = check_qemu_dependency(a.cpu)
@@ -253,7 +258,8 @@ def main():
     payload = open(a.payload, 'rb').read()
     font = None
     if a.kernel:
-        symbols = subprocess.check_output(['llvm-nm', '--defined-only', a.kernel], text=True)
+        nm = ['llvm-nm', '--defined-only'] if shutil.which('llvm-nm') else ['xcrun', 'nm', '-U']
+        symbols = subprocess.check_output(nm + [a.kernel], text=True)
         fonts = [int(line.split()[0], 16) for line in symbols.splitlines()
                  if line.split()[-1:] == ['_iso_font']]
         if len(fonts) != 1:
@@ -267,7 +273,9 @@ def main():
     open(f'{out}/stub.bin', 'wb').write(stub(ba_pa, entry_pa))
     print(f'phys_base={phys_base:#x} boot_args={ba_pa:#x} entry={entry_pa:#x}', file=sys.stderr)
 
-    mon = f'{out}/mon.sock'
+    # macOS AF_UNIX paths are limited to 104 bytes; workspace names may exceed that.
+    socket_dir = tempfile.mkdtemp(prefix='poco-qmp-', dir='/private/tmp' if sys.platform == 'darwin' else None)
+    mon = os.path.join(socket_dir, 'mon.sock')
     if os.path.exists(mon):
         os.unlink(mon)
     # virt RAM starts at 0x40000000: cover the payload's RAM (mkadt.py --highmem needs 8G).
@@ -319,6 +327,7 @@ def main():
         else:
             print(f'qemu exited early: {p.returncode}', file=sys.stderr)
 
+        result.update(profile=a.profile, machine='qemu-virt', hardware_validation=False)
         open(f'{out}/result.json', 'w').write(json.dumps(result, indent=2) + '\n')
         print(json.dumps(result), file=sys.stderr)
         print(f'{out}/fb.png  {out}/regs.txt  {out}/qemu.log', file=sys.stderr)
@@ -337,6 +346,7 @@ def main():
             p.wait()
         return 130
     finally:
+        shutil.rmtree(socket_dir, ignore_errors=True)
         ram_file = f'{out}/ram.bin'
         if os.path.exists(ram_file):
             try:

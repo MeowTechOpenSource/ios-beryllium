@@ -1,0 +1,140 @@
+--- /dev/null
++++ b/iokit/Kernel/arm/BerylliumDisplay.h
+@@ -0,0 +1,41 @@
++/* SPDX-License-Identifier: MIT
++ * Pure display helpers shared by the Poco kernel overlay and host tests.
++ */
++#pragma once
++#include <stddef.h>
++#include <stdint.h>
++struct beryllium_viewport {
++    int width, height, logical_width, logical_height, offset_x, offset_y;
++};
++static inline int beryllium_viewport_init(struct beryllium_viewport *v,
++                                         unsigned w, unsigned h, int native)
++{
++    if (!v || !w || !h || w>16384 || h>16384) return -1;
++    v->width=(int)w; v->height=(int)h;
++    v->logical_width=(!native && w<=1125 && h<=2436) ? 1125 : (int)w;
++    v->logical_height=(!native && w<=1125 && h<=2436) ? 2436 : (int)h;
++    v->offset_x=(v->logical_width-v->width)/2;
++    v->offset_y=(v->logical_height-v->height)/2;
++    return 0;
++}
++static inline int beryllium_axis_fixed(int value, int extent, int offset, int logical)
++{
++    if (extent<=0 || logical<=0 || extent>16384 || logical>16384 ||
++        offset<0 || offset>logical || extent>logical-offset) return -1;
++    value=value<0 ? 0 : (value>=extent ? extent-1 : value);
++    return (int)(((int64_t)value+offset)*65536/logical);
++}
++/* BGRA/XRGB little-endian words. Draw only visible pixels; preserve row padding. */
++static inline int beryllium_display_pattern(volatile uint32_t *pixels, size_t bytes,
++                                            unsigned w, unsigned h, unsigned stride)
++{
++    if (!pixels || !w || !h || w>16384 || h>16384 || stride%4 ||
++        stride/4<w || h>bytes/stride) return -1;
++    const uint32_t colors[8]={0xffffffff,0xffffff00,0xff00ffff,0xff00ff00,
++                              0xffff00ff,0xffff0000,0xff0000ff,0xff000000};
++    for (unsigned y=0;y<h;y++)
++        for (unsigned x=0;x<w;x++)
++            pixels[(size_t)y*(stride/4)+x]=(x==0 || y==0 || x==w-1 || y==h-1)
++                ? 0xffffffff : colors[(size_t)x*8/w];
++    return 0;
++}
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -48,6 +48,7 @@
+ #include <IOKit/IOTimerEventSource.h>
+ #include <IOKit/system.h>
+ #include <pexpert/pexpert.h>
++#include "BerylliumDisplay.h"
+ #include <kern/clock.h>
+ #include <sys/proc.h>
+ 
+@@ -195,6 +196,14 @@
+ 	uint32_t hz = 10;
+ 	PE_parse_boot_argn("sweetfb_hz", &hz, sizeof(hz));
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
++	int pattern = 0;
++	PE_parse_boot_argn("beryllium_fbtest", &pattern, sizeof(pattern));
++	if (pattern) {
++		int result = beryllium_display_pattern((volatile uint32_t *)fPixels,
++		    (size_t)fRowBytes * fHeight, fWidth, fHeight, fRowBytes);
++		IOLog("BERYLLIUM graphics: pattern result=%d %ux%u stride=%u\n",
++		    result, fWidth, fHeight, fRowBytes);
++	}
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 
+ 	setProperty(kIOUserClientClassKey, "IOMobileFramebufferUserClient");
+--- a/iokit/Kernel/arm/hid/SweetHID.cpp
++++ b/iokit/Kernel/arm/hid/SweetHID.cpp
+@@ -21,6 +21,7 @@
+ #include <IOKit/IOTimerEventSource.h>
+ #include <libkern/c++/OSArray.h>
+ #include <pexpert/pexpert.h>
++#include "../BerylliumDisplay.h"
+ 
+ #include "IOHIDEventService.h"
+ #include "IOHIDEventServiceUserClient.h"
+@@ -367,7 +368,7 @@
+ 	virtual UInt32 getProductID() APPLE_KEXT_OVERRIDE { return 2; }
+ private:
+ 	IOLock *fLock;
+-	int fLogicalW, fLogicalH, fOffX, fOffY;
++	int fLogicalW, fLogicalH, fOffX, fOffY, fPhysicalW, fPhysicalH;
+ 	bool fDown[SWEET_TOUCH_FINGERS];
+ 	bool fEdge[SWEET_TOUCH_FINGERS];
+ 	IOFixed fX[SWEET_TOUCH_FINGERS];
+@@ -434,10 +435,18 @@
+ 	}
+ 	int native = 0;
+ 	PE_parse_boot_argn("sweetfb_native", &native, sizeof(native));
+-	fLogicalW = native ? 1080 : 1125;
+-	fLogicalH = native ? 2400 : 2436;
+-	fOffX = (fLogicalW - 1080) / 2;
+-	fOffY = (fLogicalH - 2400) / 2;
++	PE_Video video = {};
++	PE_current_console(&video);
++	struct beryllium_viewport view;
++	if (video.v_width > 16384 || video.v_height > 16384 ||
++	    beryllium_viewport_init(&view, (unsigned)video.v_width,
++	    (unsigned)video.v_height, native)) return false;
++	fPhysicalW = view.width;
++	fPhysicalH = view.height;
++	fLogicalW = view.logical_width;
++	fLogicalH = view.logical_height;
++	fOffX = view.offset_x;
++	fOffY = view.offset_y;
+ 	/* The digitizer covers the main display (backboardd maps it 1:1). */
+ 	setProperty("DisplayIntegrated", kOSBooleanTrue);
+ 	setProperty("SurfaceWidth", (unsigned long long)(68 << 16), 32);	/* mm, 16.16 */
+@@ -458,22 +467,22 @@
+ 	if (finger < 0 || finger >= SWEET_TOUCH_FINGERS) {
+ 		return;
+ 	}
+-	x = x < 0 ? 0 : (x > 1079 ? 1079 : x);
+-	y = y < 0 ? 0 : (y > 2399 ? 2399 : y);
++	x = x < 0 ? 0 : (x >= fPhysicalW ? fPhysicalW - 1 : x);
++	y = y < 0 ? 0 : (y >= fPhysicalH ? fPhysicalH - 1 : y);
+ 
+ 	IOLockLock(fLock);
+ 	bool was = fDown[finger];
+ 	/* Panel pixels -> the presented 1125x2436 display (SweetFramebuffer.cpp). */
+-	IOFixed nx = (IOFixed)(((int64_t)(x + fOffX) << 16) / fLogicalW);
+-	IOFixed ny = (IOFixed)(((int64_t)(y + fOffY) << 16) / fLogicalH);
++	IOFixed nx = (IOFixed)(beryllium_axis_fixed(x, fPhysicalW, fOffX, fLogicalW));
++	IOFixed ny = (IOFixed)(beryllium_axis_fixed(y, fPhysicalH, fOffY, fLogicalH));
+ 	bool moved = down && (nx != fX[finger] || ny != fY[finger]);
+ 	if (was == down && !moved) {
+ 		IOLockUnlock(fLock);
+ 		return;
+ 	}
+ 	if (!was && down) {
+-		fEdge[finger] = x < SWEET_TOUCH_EDGE_PX || x > 1079 - SWEET_TOUCH_EDGE_PX ||
+-		    y < SWEET_TOUCH_EDGE_PX || y > 2399 - SWEET_TOUCH_EDGE_PX;
++		fEdge[finger] = x < SWEET_TOUCH_EDGE_PX || x > fPhysicalW - 1 - SWEET_TOUCH_EDGE_PX ||
++		    y < SWEET_TOUCH_EDGE_PX || y > fPhysicalH - 1 - SWEET_TOUCH_EDGE_PX;
+ 	}
+ 
+ 	collection = IOHIDEvent::digitizerEvent(now, 0, kIOHIDDigitizerTransducerTypeHand, false, 0, 0, 0);
