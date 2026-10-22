@@ -1,5 +1,18 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## THIRD SAMPLE CONFIRMS SAME LAUNCHSERVICES WAIT — 2026-10-22
+
+- Photo20:36:27 SpringBoard26 slide0x47470000, mh0x1025b0000. Exact readable
+  t0 addresses resolve using matching shared cache: 209a81030 mach_msg2_trap+8,
+  1d4fda308 dispatch_mach_send_and_wait_for_reply+532, 1c8615cb0 NSXPC invocation,
+  1c90f98e4 LSContextInitCommon+512, 1c9060bc0 LSContextInitWithOptions+12,
+  1c9126238 LaunchServices::Database::Context::_get+108. Repeated same wait across
+  prior boot/slides. Not proof of graphics failure or SpringBoard never starting.
+- Photos20:34/20:36 lack lsd sample despite sampler selection. Absence in cropped
+  screen is NOT proof process absent. Need reliable lsd lifecycle/server trace
+  or full process census rather than asking repeated SpringBoard photos.
+- Current boot still running; no reboot or filesystem mutation done this turn.
+
 ## LATER SAMPLE: SPRINGBOARD STILL IN LAUNCHSERVICES — 2026-10-22
 
 - User photo20:14:33 from continuing boot now includes cfprefsd[92],
