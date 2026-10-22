@@ -1,5 +1,19 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## SAMPLER LOCKING FIX VALIDATED, BUILD NEXT — 2026-10-22
+
+- User asks fix UI wait. Added board patch0087: bounded64 saved-register
+  snapshots collected under task lock; user-frame paging and all console output
+  happen AFTER unlock. Retain/release target VM map across reads; allocate before
+  locking. Running-thread registers remain best-effort, not atomic snapshots.
+- Actual patched exception.c passes local arm64 XNU syntax check with prior
+  generated headers. Production-function host fixtures pass ASan/UBSan: output,
+  paging and allocation forbidden under lock; bounded enumeration, cyclic frame,
+  failed read, invalid saved state, allocation failure, balanced map/lifetimes.
+- This repairs diagnostic locking; not yet a UI fix. Next build0087 and use a
+  narrow lsd/cfprefsd/installd sample to trace service wait, no userdata reflash.
+- Saved logs remain private; do not infer AMFI bypass success from missing events.
+
 ## CACHE CANDIDATE LOG RESULT: UI STILL UNRESOLVED — 2026-10-22
 
 - User confirms persistent Apple logo. Temporary recovery boot succeeded and a
