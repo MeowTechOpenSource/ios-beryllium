@@ -1,5 +1,24 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## CACHE CANDIDATE LOG RESULT: UI STILL UNRESOLVED — 2026-10-22
+
+- User confirms persistent Apple logo. Temporary recovery boot succeeded and a
+  separate complete read-only filesystem capture was obtained. Original snapshot
+  retained unchanged. Private capture hashes, paths and boot identifiers stay local.
+- Installed ExtensionKit flag confirmed false. Decoding metadata was added only
+  to a local analysis shadow, never the phone. Phone currently remains in TWRP.
+- Latest launchd log confirms SpringBoard, backboardd and LaunchServices were
+  marked running. No LaunchServices exit appears in the saved launchd log.
+- Latest boot isolated by boot boundary rather than repeated wallclock timestamps.
+  SpringBoard logs bootstrap success and further initialization; backboardd
+  continues thermal-client HID retries. No interactive UI was observed.
+- Latest decoded log has zero identifiable LaunchServices events despite its
+  verified launch. Many metadata/compose failures remain, and an independent
+  parser misses latest boot records. Missing AMFI errors do NOT establish a fix.
+- Next investigation needs reliable LaunchServices wait/service evidence. Earlier
+  sampler holds tasklock across paging reads, so don't re-enable it unchanged.
+  No speculative cache deletion, further reflash or new kernel this turn.
+
 ## CACHE CANDIDATE HARDWARE TEST LAUNCHED — 2026-10-22
 
 - Full bootloader restart resolved the post-flash USB stall. Product beryllium
@@ -7,8 +26,15 @@
   accepted: send0.394s, boot0.073s, total0.468s, exit0.
 - Installed filesystem is the single ExtensionKit flag candidate documented below.
   No further userdata flash or other partition writes. No stack sampler.
-- Await actual screen progress after2–3minutes. Bootloader acceptance alone is
-  NOT proof of XNU startup, ExtensionKit fallback success, or working iOS UI.
+- User observed Apple logo after2–3minutes and again after additional wait;
+  no interactive UI. Single-flag candidate has no observed visible improvement.
+  ExtensionKit error resolution remains unknown until saved logs are read.
+- Requested FASTBOOT for temporary recovery/read-only log capture. Prepared
+  capture-extension-cache-result.py with separate output filename; never overwrite
+  original rollback snapshot. No more stack sampling or blind UI claims.
+- Temporary recovery boot accepted0.907s/0.073s total0.984s. Recovery root,
+  beryllium, TWRP and userdata geometry verified. Separate read-only result
+  capture underway at~29MiB/s; source remains unchanged, partial file not complete.
 
 ## EXTENSIONKIT CANDIDATE INSTALLATION IN PROGRESS — 2026-10-22
 
