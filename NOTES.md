@@ -1,5 +1,16 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## OFFLINE POCO PORTING — 2026-10-22
+
+- User now has no device available and requests emulator work plus Wi-Fi/sound/graphics and device-specific what-works. No further hardware operations performed. Prior flash actually failed on host with "Failed reading from userdata" before any reported send/write; no completed userdata installation. Android ADB had returned before that attempt, bootloader reverified. Do not claim flash success.
+- Installed QEMU11.1.2 via Homebrew. Added --profileberyllium geometry9d400000/1080x2246 to tools/qemu-sweet.py, macOS xcrun nm fallback, short temporary QMPsocket (long workspacepath exceededAF_UNIX104bytes). Added mkberylliumqemuadt.py using actualPoco memory/CPU match but virt GIC/timer. Neveruse emulatorADT onphone. DefaultCPUcortex-a76, not SDM845 model.
+- Verified0083 kernel twice in QEMU:60s screen has BSDrootmd0, staticPID1 and five heartbeats, no visiblepanic/unknown glyphs.45s regression explicitly requires PID1+heartbeat (--expect-text), passes with zero unknown glyphs. These snapshots do not prove Apple userland or peripherals.
+- Added portable support/transport C wire codecs: HTC8byteheader/4bytetrailerrecord envelope bounds; APRv0 20byteheader encode/decode plus finalBASIC_RSP_RESULT token+command correlation (ACCEPTED notcompletion). HostASan/UBSan wirefixtures/truncation/unaligned/canary/20k malformedinputs passed; AArch64freestanding crosscompile passed. No SNOC/QMI/GLINK/firmware or network/audio frontend wired yet. These are groundwork, NOT functionalWiFi/audio.
+- Added display.h viewport and guardedBGRApattern, tests underASan/UBSan pass; kernel0084 overlay uses sharedheader for boot-video geometry in HID instead of hardcoded2400, clamps physicalbounds, optin beryllium_fbtest1 drawsbars and mutesconsole. Nophysicaltouchdriver port. Overlays0082/83/84 apply sequentially; actualstagedheader tested and identicaltosource.
+- Public source commits85429a0,51eaf76,cb56572 underexistingpublicationapproval. CIportable39718265230 passed. CI kernel39717977499 succeeded from85429a0433eb55780086a452dc83af21cbf88bde; targetmetadata verified. Kernel0084 SHA534dadbb87b8759d6abefb93b78073cc98296c82f8c0388383450340edfabd16. Currently running two independent QEMUs:research/qemu-beryllium-0084-init55s explicitPID1/heartbeat check; research/qemu-beryllium-0084-pattern40s pixelcheck. Await results before claimingpatternpassed.
+- Device-specific truth table ports/beryllium/STATUS.md; refreshed stale docs/BERYLLIUM_BRINGUP.md. outputs/poco-f1-support-status.md +poco-emulator-pid1.png available. No AdrenoGPU acceleration, genuineWiFi/audio, Applelaunchd orSpringBoard evidence. Physicalbattery stillstaticfallback, input/USBdrivers disabled. PinnedLinuxv6.12 board/APR/HTC references in research/beryllium-linux (ignored); avoid publishingfirmware/calibration/dumps.
+
+
 ## USERDATA WRITE AUTHORIZED / IMAGE VALIDATED — 2026-10-22
 
 - User explicitly says local helper finished and "i authorize you to write to the ufs/format userdata". This authorizes userdata overwrite for iOS; do not ask again. Keep bootloaders/recovery/modem/persist intact. No flash performed yet.
