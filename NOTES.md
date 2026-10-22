@@ -1,5 +1,16 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## NO-LOGGER BOOT ADVANCES PAST MOUNT — 2026-10-22
+
+- User reports boot-ios-nolog.img now prints error 16 opening /dev/ufsroot0,
+  bindfs lookup for .../usr/standalone/firmware failed error 2, then Doing boot
+  task. This is newer output than prior repeated mount-phase-1/exec mount screen.
+- Historical upstream notes identify mounted-device EBUSY 16 and optional
+  firmware-path ENOENT 2 as nonfatal here. Do not treat those as a new panic.
+- Disabling raw logger correlates with progress; one run does not prove exact
+  logger/UFS concurrency bug. Keep sweetlog=0 for current boot. Need latest
+  boot-task name / next output before any reboot. Apple launchd/UI not complete.
+
 ## FULL LOG RECOVERED / LOGGER ISOLATION TEST — 2026-10-22
 
 - Temporary TWRP boot succeeded (send 0.907s / boot 0.073s). Recovery ADB root
