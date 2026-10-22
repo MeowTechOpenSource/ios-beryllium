@@ -25,7 +25,9 @@
   545e9594e675df32cc38ffe79609680082018136d02ec06ccd4c2f2b80b1015e.
   User reports FASTBOOT ready, but device count0; ADB empty and IOUSBHostDevice
   shows USB3.1 Hub only. Image NOT sent. Need phone USB data path restored, then
-  verify identity and retry temporary boot. Keep sweetlog0; no userdata reflash.
+  Reconnection then succeeded: product beryllium and checksum verified, send OKAY
+  0.387s / Booting OKAY 0.073s, total0.462s exit0. Await lsd/cfprefsd/installd
+  sampler photos. Keep sweetlog0; no userdata reflash.
 
 ## DRIVERKITD PER-PROCESS MEMORY LIMIT KILL — 2026-10-22
 
