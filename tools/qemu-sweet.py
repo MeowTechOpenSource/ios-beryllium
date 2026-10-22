@@ -161,6 +161,23 @@ def screen_result(screen, unknown):
     return {'status': status, 'unknown_glyphs': unknown, 'snapshot_only': True}
 
 
+def pattern_difference(raw):
+    """Count every pixel differing from the diagnostic, including border/overlays."""
+    if len(raw) != FB_STRIDE * FB_H:
+        raise ValueError('wrong framebuffer byte count')
+    palette = [0xffffffff, 0xffffff00, 0xff00ffff, 0xff00ff00,
+               0xffff00ff, 0xffff0000, 0xff0000ff, 0xff000000]
+    border = (0xffffffff,) * FB_W
+    interior = tuple(0xffffffff if x in (0, FB_W - 1)
+                     else palette[x * 8 // FB_W] for x in range(FB_W))
+    mismatch = 0
+    for y in range(FB_H):
+        actual = struct.unpack_from(f'<{FB_W}I', raw, y * FB_STRIDE)
+        expected = border if y in (0, FB_H - 1) else interior
+        mismatch += sum(a != b for a, b in zip(actual, expected))
+    return mismatch
+
+
 def qmp(sock_path, *cmds, pmemsave=None):
     """Run QEMU human-monitor commands over QMP (synchronous, unlike the echoing HMP socket)."""
     s = socket.socket(socket.AF_UNIX)
@@ -322,12 +339,7 @@ def main():
             p.wait()
             raw = open(f'{out}/fb.raw', 'rb').read()
             write_png(f'{out}/fb.png', raw)
-            pattern_ok = None
-            if a.expect_pattern:
-                palette = [0xffffffff,0xffffff00,0xff00ffff,0xff00ff00,0xffff00ff,0xffff0000,0xff0000ff,0xff000000]
-                pixel = lambda x,y: struct.unpack_from('<I',raw,y*FB_STRIDE+x*4)[0]
-                pattern_ok = all(pixel(min(FB_W-2, max(1,(i*2+1)*FB_W//16)),FB_H//2)==color for i,color in enumerate(palette))
-                pattern_ok &= all(pixel(x,y)==0xffffffff for x,y in [(0,0),(FB_W-1,0),(0,FB_H-1),(FB_W-1,FB_H-1),(FB_W//2,FB_H-1)])
+            mismatch = pattern_difference(raw) if a.expect_pattern else None
             result = {'status': 'not_decoded'}
             if font is not None:
                 screen, unknown = decode_screen(raw, font)
@@ -336,7 +348,8 @@ def main():
             if a.expect_text:
                 result['expected_text'] = {text: text in screen for text in a.expect_text}
             if a.expect_pattern:
-                result['pattern_verified'] = bool(pattern_ok)
+                result['pattern_mismatched_pixels'] = mismatch
+                result['pattern_verified'] = mismatch == 0
             os.unlink(f'{out}/fb.raw')
         else:
             print(f'qemu exited early: {p.returncode}', file=sys.stderr)

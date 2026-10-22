@@ -7,6 +7,8 @@ on:
       - 'tools/test-beryllium-*'
       - 'tools/test-androidsparse.py'
       - 'tools/mkandroidsparse.py'
+      - 'tools/qemu-sweet.py'
+      - 'tools/test-qemu-pattern.py'
       - '.github/workflows/beryllium-checks.yml'
   workflow_dispatch:
 jobs:
@@ -28,3 +30,5 @@ jobs:
           python3 tools/test-beryllium-payload.py
       - name: Exact sparse-image format
         run: python3 tools/test-androidsparse.py
+      - name: Full-frame graphics detector
+        run: python3 tools/test-qemu-pattern.py

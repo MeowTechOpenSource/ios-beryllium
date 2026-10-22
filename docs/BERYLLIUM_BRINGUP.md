@@ -54,9 +54,9 @@ Private FDTs, partition backups, Apple firmware, images, serials and credentials
 remain outside git. Upstream historical permissions are not used as this user's
 authorization. Keep bootloaders, recovery, modem and persist intact.
 
-With the 0084 kernel and `beryllium_fbtest=1` in the payload command line, run the
-wrapper with `--expect-pattern` (without text expectations) to check band colors
-and the panel border directly. Missing expectations return exit code 4.
+With the 0084 kernel and `beryllium_fbtest=1 -noprogress` in the payload command line, run the
+wrapper with `--expect-pattern` (without text expectations) to check every framebuffer pixel, including band colors
+and the panel border. `-noprogress` prevents the kernel boot-progress overlay. Missing expectations return exit code 4.
 
 ## Prepared sparse installation image (no phone required)
 
