@@ -52,13 +52,14 @@
  #include <kern/clock.h>
  #include <sys/proc.h>
  
-@@ -195,6 +196,14 @@
+@@ -195,6 +196,15 @@
  	uint32_t hz = 10;
  	PE_parse_boot_argn("sweetfb_hz", &hz, sizeof(hz));
  	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
 +	int pattern = 0;
 +	PE_parse_boot_argn("beryllium_fbtest", &pattern, sizeof(pattern));
 +	if (pattern) {
++		sweet_console_muted = 1; /* explicit test mode; panics still draw */
 +		int result = beryllium_display_pattern((volatile uint32_t *)fPixels,
 +		    (size_t)fRowBytes * fHeight, fWidth, fHeight, fRowBytes);
 +		IOLog("BERYLLIUM graphics: pattern result=%d %ux%u stride=%u\n",
@@ -138,3 +139,8 @@
  	}
  
  	collection = IOHIDEvent::digitizerEvent(now, 0, kIOHIDDigitizerTransducerTypeHand, false, 0, 0, 0);
+--- a/pexpert/arm/pe_serial.c
++++ b/pexpert/arm/pe_serial.c
+@@ -763,0 +764,2 @@
++	extern int sweet_console_muted;
++	if (sweet_console_muted && !panic_active()) return;

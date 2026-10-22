@@ -17,6 +17,7 @@ assert n.count(old)>=1
 n=n.replace(old,'''\tint pattern = 0;
 \tPE_parse_boot_argn("beryllium_fbtest", &pattern, sizeof(pattern));
 \tif (pattern) {
+\t\tsweet_console_muted = 1; /* explicit test mode; panics still draw */
 \t\tint result = beryllium_display_pattern((volatile uint32_t *)fPixels,
 \t\t    (size_t)fRowBytes * fHeight, fWidth, fHeight, fRowBytes);
 \t\tIOLog("BERYLLIUM graphics: pattern result=%d %ux%u stride=%u\\n",
@@ -48,5 +49,11 @@ n=n.replace('x > 1079 ? 1079 : x','x >= fPhysicalW ? fPhysicalW - 1 : x').replac
 n=n.replace('((int64_t)(x + fOffX) << 16) / fLogicalW','beryllium_axis_fixed(x, fPhysicalW, fOffX, fLogicalW)').replace('((int64_t)(y + fOffY) << 16) / fLogicalH','beryllium_axis_fixed(y, fPhysicalH, fOffY, fLogicalH)')
 n=n.replace('x > 1079 - SWEET_TOUCH_EDGE_PX','x > fPhysicalW - 1 - SWEET_TOUCH_EDGE_PX').replace('y > 2399 - SWEET_TOUCH_EDGE_PX','y > fPhysicalH - 1 - SWEET_TOUCH_EDGE_PX')
 changes.append((name,s,n))
-patch=''.join(''.join(difflib.unified_diff(s.splitlines(True),n.splitlines(True),fromfile='a/'+p if s else '/dev/null',tofile='b/'+p)) for p,s,n in changes)
+name='pexpert/arm/pe_serial.c'
+s=(base/name).read_text()
+old='fbcon_transmit_data(uint8_t c)\n{'
+assert s.count(old)==1
+n=s.replace(old,old+"\n\textern int sweet_console_muted;\n\tif (sweet_console_muted && !panic_active()) return;",1)
+changes.append((name,s,n))
+patch=''.join(''.join(difflib.unified_diff(s.splitlines(True),n.splitlines(True),fromfile='a/'+p if s else '/dev/null',tofile='b/'+p, n=0 if p=='pexpert/arm/pe_serial.c' else 3)) for p,s,n in changes)
 (ROOT/'ports/beryllium/xnu/0084-beryllium-display-profile.patch').write_text(patch)
