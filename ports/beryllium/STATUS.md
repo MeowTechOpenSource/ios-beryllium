@@ -17,7 +17,7 @@ This is an XNU/iOS port. Linux driver support is a reference, not an XNU driver.
 | Touch / physical keys | None under XNU | HID services register; upstream Redmi hardware drivers disabled. Poco geometry correction does not port its touch controller. |
 | Battery | No genuine gauge reading | Existing static 100% fallback is a placeholder. |
 | USB | Android ADB / temporary TWRP / fastboot verified previously | XNU USB driver disabled; QEMU virtual devices do not establish Poco USB support. |
-| Apple iOS userland / SpringBoard | Apple launchd and multiple daemons, including backboardd, observed | Apple launchd PID 1 prints its version, boot args and starts boot tasks after both development arguments. No SpringBoard or interactive UI confirmed. |
+| Apple iOS userland / SpringBoard | Apple launchd and multiple daemons, including backboardd, observed | Apple launchd PID 1 prints its version, boot args and starts boot tasks after both development arguments. SpringBoard PID26 and backboardd sampled alive; SpringBoard main thread waits in LaunchServices database XPC. Interactive UI not confirmed. |
 
 ## Emulator scope
 

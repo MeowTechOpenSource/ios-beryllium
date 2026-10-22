@@ -1,5 +1,30 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## SPRINGBOARD CONFIRMED / LAUNCHSERVICES WAIT SYMBOLICATED — 2026-10-22
+
+- User photo19:16:57 shows SMP SpringBoard[26] slide0x8e10000 mh0x100540000,
+  multiple SpringBoard/backboardd threads. This proves SpringBoard starts and is
+  alive at sample time; prior unconfirmed wording superseded. No UI success.
+- Readable SpringBoard t0 stack resolves (subtract slide) to mach_msg2_trap,
+  mach_msg2_internal, dispatch_mach_send_and_wait_for_reply, NSXPCConnection
+  sendInvocation, LAUNCH_SERVICES_WAS_ASKED_TO_PERFORM_BLOCKING_IO_ON_THE_MAIN_QUEUE,
+  LSCopyServerStore, LSContextInitCommon, LSContextInitWithOptions,
+  LaunchServices::Database::Context::_get. Concrete main-thread LaunchServices
+  XPC wait, not proof of exact lsd-side failure or graphics root cause.
+- backboardd readable thread includes CFPrefsSearchListSource synchronouslySend...
+  / CFXPreferences withConnectionForRole. Some photo addresses uncertain; don't
+  treat manually transcribed unreadable ones as exact evidence.
+- Local matching OS/cache images mounted READONLY at /private/tmp/poco-os-symbols
+  and /private/tmp/poco-cache-symbols. Root-owned workspace mountpoint first failed;
+  user-owned temp mountpoint succeeds. ipsw symbol cache research/poco-symbols.a2s;
+  raw lookup transcript research/ios-root/poco-ui-photo-symbols.txt (private).
+  ipsw public/private symbols parsed; objc parse reports EOF but continues; named
+  syscall/Foundation/LaunchServices frames resolved. No firmware published.
+- Next temporary diagnostic adds lsd,cfprefsd,installd to current sampler list;
+  all other payload bytes identical, bounds guard pass. boot-ios-lsd.img SHA256
+  545e9594e675df32cc38ffe79609680082018136d02ec06ccd4c2f2b80b1015e.
+  Await FASTBOOT. Keep sweetlog0, no raw-tail logger or userdata reflash.
+
 ## DRIVERKITD PER-PROCESS MEMORY LIMIT KILL — 2026-10-22
 
 - User photo from focused UI diagnostic shows CRASH driverkitd[67], sig9,
