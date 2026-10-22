@@ -1,5 +1,16 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## DRIVERKITD PER-PROCESS MEMORY LIMIT KILL — 2026-10-22
+
+- User photo from focused UI diagnostic shows CRASH driverkitd[67], sig9,
+  reason ns1 code0x7. Source reason.h / kern_memorystatus.h resolves exactly to
+  OS_REASON_JETSAM / JETSAM_REASON_MEMORY_PERPROCESSLIMIT, not a CPU fault and
+  not proof of global RAM exhaustion. Other services continue starting below it.
+- Current approved kernel RAM is255MiB. This low-memory configuration warrants
+  investigation, but do not silently expand physical memory or disable limits
+  based only on driverkitd. Need SpringBoard/backboardd sampler/crash lines to
+  identify actual UI blocker. Keep current boot running for those diagnostics.
+
 ## DISPLAY BOOT STAYS AT APPLE LOGO — 2026-10-22
 
 - User reports 0084c console-suppressed image shows plain Apple logo and remains
