@@ -73,7 +73,7 @@ a renamed log does not certify new hardware functionality.
 
 The verified 16 GiB iOS filesystem sparse image was flashed to the Poco's userdata
 on 2026-10-22: all 15 sends/writes reported `OKAY`, and fastboot exited successfully.
-Temporary boot transfer failed with a USB read error; reconnect is needed; a successful flash does not establish
+After reconnection, temporary kernel transfer and bootloader handoff succeeded; a successful flash does not establish
 an XNU filesystem mount, Apple launchd or iOS UI. GPT, bootloaders, recovery, modem,
 persist and private backups were preserved.
 

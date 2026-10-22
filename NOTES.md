@@ -1,5 +1,15 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## TEMPORARY IOS BOOT ACCEPTED — 2026-10-22
+
+- User reconnected USB. Fastboot product beryllium / unlocked yes verified.
+- boot-ios.img SHA256 reverified as
+  1535e9adb495b78736af842146496e2e7d5a85aaf7aeb1c8a9e498dbaa6d92be.
+- Retry fastboot boot succeeded: sending 16700 KiB OKAY 0.395s; Booting OKAY
+  0.073s; exit 0, total 0.470s. No further partition writes.
+- Await actual screen evidence for UFS/HFS mount, BSD root, launchd or panic.
+  Successful bootloader handoff alone does not confirm Apple userspace/UI.
+
 ## DEVICE RETURNED / USERDATA FLASH SUCCEEDED — 2026-10-22
 
 - ADB identified POCO F1 / beryllium; rebooted to bootloader. Fastboot product

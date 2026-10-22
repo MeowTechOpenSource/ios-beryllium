@@ -52,7 +52,7 @@ prepared 16 GiB image's full sparse expansion was reverified against its expecte
 SHA256. On the device's return, fastboot confirmed beryllium/unlocked and the
 expected userdata capacity. All 15 sparse chunks sent/wrote OKAY, exit 0 in
 362.191 seconds. This supersedes the earlier host-side failed raw-image attempt.
-Temporary boot transfer failed with a USB read error; reconnect is needed; XNU mount and Apple launchd/UI remain unconfirmed.
+After reconnection, temporary kernel transfer and bootloader handoff succeeded; XNU mount and Apple launchd/UI remain unconfirmed.
 
 Private FDTs, partition backups, Apple firmware, images, serials and credentials
 remain outside git. Upstream historical permissions are not used as this user's
