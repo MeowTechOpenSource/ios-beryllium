@@ -226,8 +226,10 @@ def main():
     ap.add_argument('--profile', choices=['sweet', 'beryllium'], default='sweet',
                     help='Framebuffer profile; virt does not emulate Poco peripherals')
     ap.add_argument('--cpu', default='cortex-a76', help='QEMU CPU model (default: cortex-a76)')
-    ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (uses llvm-nm)')
+    ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (llvm-nm or xcrun nm)')
     ap.add_argument('--fail-on-panic', action='store_true', help='exit 2 for a visible panic, 3 for incomplete/blank decoding; requires --kernel')
+    ap.add_argument('--expect-text', action='append', default=[], help='required decoded screen text (repeatable); missing text exits 4')
+    ap.add_argument('--expect-pattern', action='store_true', help='require the Poco BGRA diagnostic bars; missing pattern exits 4')
     ap.add_argument('--live-serial', action='store_true', help='stream serial console output to stdout in real time')
     ap.add_argument('--check-env', action='store_true', help='check QEMU installation and dependencies without running a payload')
     a = ap.parse_args()
@@ -244,6 +246,9 @@ def main():
 
     if not a.payload or not a.outdir:
         ap.error('payload and outdir are required unless --check-env is specified')
+
+    if a.expect_text and not a.kernel:
+        ap.error('--expect-text requires --kernel')
 
     if a.fail_on_panic and not a.kernel:
         ap.error('--fail-on-panic requires --kernel')
@@ -317,11 +322,21 @@ def main():
             p.wait()
             raw = open(f'{out}/fb.raw', 'rb').read()
             write_png(f'{out}/fb.png', raw)
+            pattern_ok = None
+            if a.expect_pattern:
+                palette = [0xffffffff,0xffffff00,0xff00ffff,0xff00ff00,0xffff00ff,0xffff0000,0xff0000ff,0xff000000]
+                pixel = lambda x,y: struct.unpack_from('<I',raw,y*FB_STRIDE+x*4)[0]
+                pattern_ok = all(pixel(min(FB_W-2, max(1,(i*2+1)*FB_W//16)),FB_H//2)==color for i,color in enumerate(palette))
+                pattern_ok &= all(pixel(x,y)==0xffffffff for x,y in [(0,0),(FB_W-1,0),(0,FB_H-1),(FB_W-1,FB_H-1),(FB_W//2,FB_H-1)])
             result = {'status': 'not_decoded'}
             if font is not None:
                 screen, unknown = decode_screen(raw, font)
                 open(f'{out}/fb.txt', 'w').write(screen)
                 result = screen_result(screen, unknown)
+            if a.expect_text:
+                result['expected_text'] = {text: text in screen for text in a.expect_text}
+            if a.expect_pattern:
+                result['pattern_verified'] = bool(pattern_ok)
             os.unlink(f'{out}/fb.raw')
         else:
             print(f'qemu exited early: {p.returncode}', file=sys.stderr)
@@ -330,6 +345,10 @@ def main():
         open(f'{out}/result.json', 'w').write(json.dumps(result, indent=2) + '\n')
         print(json.dumps(result), file=sys.stderr)
         print(f'{out}/fb.png  {out}/regs.txt  {out}/qemu.log', file=sys.stderr)
+        if a.expect_text and not all(result.get('expected_text', {}).get(text, False) for text in a.expect_text):
+            return 4
+        if a.expect_pattern and not result.get('pattern_verified'):
+            return 4
         if a.fail_on_panic and result['status'] == 'panic':
             return 2
         if a.fail_on_panic and result['status'] in ('incomplete_decode', 'blank_screen'):
