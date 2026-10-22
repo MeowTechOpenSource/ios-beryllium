@@ -1,5 +1,22 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## APPLE SERVICES / DISPLAY TEST PREPARED — 2026-10-22
+
+- User reported Apple logo (not photographed here); later photo shows backboardd
+  repeatedly seeking IOAcceleratorES with 0 Found, alongside exec sleepd/nfcd/
+  mobileassetd/findmydeviced/mobiletimerd. Next photo shows many exec xpcproxy and
+  named daemons (geod/tccd/bluetoothd/fairplayd.H2 etc.), AKS calls, no visible panic.
+  Repeated exec alone does not identify exit reason or prove a particular crash loop.
+- Current 0083 console remains active over framebuffer. Next test uses verified
+  0084c kernel SHA20a0d85541dc3175e146a5daad2aff9e10b7aa41bac3dad7a7f9dba9edb0b55c,
+  same ios-ufs.adt/approved RAM/loader, sweetlog=0, both Apple startup development
+  args, sweetfb_noconsole=1 and sampler SpringBoard/backboardd. 0084c respects
+  console muting in both paths and keeps panic output. Mutes on first present,
+  not proof that a UI frame has already been seen. No touch/GPU support claim.
+- Generated payload-ios-display.bin; production guard passed. boot-ios-display.img
+  SHA256 cc86cfa2fb17f0fe1ac91d36ad7d50984f7a5ef9520f6054c25f27e39cf27c2a.
+  Await FASTBOOT before temporary test; no userdata reflash.
+
 ## NEXT WAIT: MOBILE_OBLITERATOR — 2026-10-22
 
 - User reports exec mobile_obliterator then SMP --- sample 0 on no-logger boot.

@@ -13,11 +13,11 @@ This is an XNU/iOS port. Linux driver support is a reference, not an XNU driver.
 | Adreno 630 acceleration | None | No XNU GPU driver. Requires GMU, firmware/secure setup, power, IOMMU, command submission and an iOS graphics frontend. |
 | Wi-Fi WCN3990 | None under XNU | HTC RX envelope and READY→CONNECT_SERVICE negotiation tested with wire fixtures. No SNOC/CE DMA, QMI/firmware boot, WMI/HTT, association or iOS network interface yet. |
 | Audio WCD9340 / ADSP | None under XNU | Bounded APR encode/decode tested. No GLINK/rpmsg, ADSP boot, AFE/ASM routing, SLIMbus codec or iOS audio service yet. Speaker amplifier/routing still needs target verification. |
-| UFS | Read-only root attempt reaches HFS signature failure on existing Android filesystem, per screen report | Target host map supplied; verified sparse filesystem flashed to userdata (15 chunks, fastboot exit 0); HFS PocoIOSRoot mount and Apple launchd confirmed by recovered log; boot waits after exec mount. |
+| UFS | Read-only root attempt reaches HFS signature failure on existing Android filesystem, per screen report | Target host map supplied; verified sparse filesystem flashed to userdata (15 chunks, fastboot exit 0); HFS PocoIOSRoot mount and Apple launchd confirmed by recovered log; subsequent boots advance to multiple Apple daemons. |
 | Touch / physical keys | None under XNU | HID services register; upstream Redmi hardware drivers disabled. Poco geometry correction does not port its touch controller. |
 | Battery | No genuine gauge reading | Existing static 100% fallback is a placeholder. |
 | USB | Android ADB / temporary TWRP / fastboot verified previously | XNU USB driver disabled; QEMU virtual devices do not establish Poco USB support. |
-| Apple iOS userland / SpringBoard | Not reached | Apple launchd PID 1 prints its version, boot args and starts boot tasks after both development arguments. No SpringBoard or interactive UI confirmed. |
+| Apple iOS userland / SpringBoard | Apple launchd and multiple daemons, including backboardd, observed | Apple launchd PID 1 prints its version, boot args and starts boot tasks after both development arguments. No SpringBoard or interactive UI confirmed. |
 
 ## Emulator scope
 
@@ -54,3 +54,5 @@ No fake Wi-Fi, audio or GPU service is published as working hardware.
 Source naming: overlay 0085 uses BERYLLIUM diagnostic labels for adapted/reused components. The verified kernel runs above predate this overlay; renaming does not add peripheral support.
 
 Latest physical log: BSD root ufsroot0, HFS PocoIOSRoot mounted, Apple launchd runs, then mount-phase-1 / exec mount with no recorded panic. Controlled temporary boot with background storage logger disabled is under test.
+
+Newer physical screen evidence: backboardd runs and repeatedly seeks absent IOAcceleratorES; multiple Apple daemons launch. Apple logo reported by user, but no photographed SpringBoard/setup UI yet. Console-suppressed 0084c hardware test prepared.
