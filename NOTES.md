@@ -1,5 +1,22 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## CENSUS KERNEL BUILT / IMAGE READY — 2026-10-22
+
+- CI39781037924 succeeded from820ff80; artifact metadata targetberyllium/source
+  verified, SHA256SUMS matches kernel dd83558c1654b5aee5b0baf9a799b745a9b8ff424e54db3329cfdec079caa286.
+  Artifacts xnu/out-beryllium-0086. Includes0085 BERYLLIUM labels and0086 census.
+- QEMU45s research/qemu-beryllium-0086-init passes explicit POCO staticPID1 and
+  heartbeat expectations, no visiblepanic, zero unknown glyphs, exit0. QEMU root
+  md0 doesn't start UFS-triggered sampler, so does NOT verify live census there.
+- Actual census fragment extracted from0086 passes hostASan/UBSan fixtures for
+  zero/multiplePIDs, exact names (lsd-helper not counted), reset between passes.
+  Fixtures private /private/tmp/poco-census-fixtures.c. First harness compile
+  had host __unused macro redefinition; removed redundant macro, tests pass.
+- Physical candidate uses same ios-ufs.adt/RAM/loader and last full-sampler args,
+  sweetlog0. Production payload guard pass. boot-ios-census.img SHA256
+  fb0a11dec52e5e6decf77fafa7f055b3783d5b3a6d509e36c4a847b6b7dad6b0.
+  Await FASTBOOT; no new phone command sent yet. Need hardware census at ~90s.
+
 ## EXPLICIT SERVICE CENSUS DIAGNOSTIC — 2026-10-22
 
 - Repeated screen snapshots resolve SpringBoard main thread to LaunchServices
@@ -10,8 +27,9 @@
   throughout interval. Added lsd/cfprefsd/installd exec-attempt PID and exit
   signal/status/reason namespace/code logs. No forced process starts, policy changes,
   raw storage logging or memory-window changes. Existing sampler cadence retained.
-- All Poco overlays0082–0086 apply sequentially with git apply. Need actual kernel
-  build before boot. No new image launched yet; current phone boot remains running.
+- All Poco overlays0082–0086 apply sequentially with git apply. Source820ff80
+  published; kernel CI39781037924 running. Need actual successful kernel build
+  before boot. No new image launched yet; current phone boot remains running.
 
 ## THIRD SAMPLE CONFIRMS SAME LAUNCHSERVICES WAIT — 2026-10-22
 
