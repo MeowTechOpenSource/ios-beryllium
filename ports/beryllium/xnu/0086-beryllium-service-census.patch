@@ -1,0 +1,91 @@
+--- a/bsd/dev/sweet_sample.c
++++ b/bsd/dev/sweet_sample.c
+@@ -25,6 +25,48 @@
+ extern void sweet_sample_start(void);
+ 
+ static char sweet_sample_names[128];
++
++/* Poco diagnostics: report absence explicitly before any stack walk. */
++static struct {
++    const char *name;
++    unsigned count;
++    int first_pid;
++} beryllium_watch[] = {
++    { "launchd", 0, 0 }, { "seputil", 0, 0 }, { "keybagd", 0, 0 },
++    { "lsd", 0, 0 }, { "cfprefsd", 0, 0 }, { "installd", 0, 0 },
++    { "SpringBoard", 0, 0 }, { "backboardd", 0, 0 },
++};
++
++static int
++beryllium_census_proc(proc_t p, __unused void *arg)
++{
++    char name[32];
++    proc_name(proc_pid(p), name, sizeof(name));
++    for (unsigned i = 0; i < sizeof(beryllium_watch) / sizeof(beryllium_watch[0]); i++) {
++        if (strcmp(name, beryllium_watch[i].name) == 0) {
++            if (beryllium_watch[i].count++ == 0) {
++                beryllium_watch[i].first_pid = proc_pid(p);
++            }
++        }
++    }
++    return PROC_RETURNED;
++}
++
++static void
++beryllium_census(void)
++{
++    for (unsigned i = 0; i < sizeof(beryllium_watch) / sizeof(beryllium_watch[0]); i++) {
++        beryllium_watch[i].count = 0;
++        beryllium_watch[i].first_pid = 0;
++    }
++    proc_iterate(PROC_ALLPROCLIST, beryllium_census_proc, NULL, NULL, NULL);
++    for (unsigned i = 0; i < sizeof(beryllium_watch) / sizeof(beryllium_watch[0]); i++) {
++        printf("BERYLLIUM census: %s count=%u first_pid=%d\n",
++            beryllium_watch[i].name, beryllium_watch[i].count,
++            beryllium_watch[i].first_pid);
++    }
++}
++
+ 
+ static bool
+ sweet_sample_wanted(const char *name)
+@@ -73,6 +115,7 @@
+ 	(void)tsleep(&chan, PZERO, "sweetsmp", 90 * hz);
+ 	for (int i = 0; i < 40; i++) {
+ 		printf("SMP --- sample %d\n", i);
++		beryllium_census();
+ 		proc_iterate(PROC_ALLPROCLIST, sweet_sample_proc, NULL, NULL, NULL);
+ 		(void)tsleep(&chan, PZERO, "sweetsmp", 120 * hz);
+ 	}
+--- a/bsd/kern/kern_exit.c
++++ b/bsd/kern/kern_exit.c
+@@ -1845,6 +1845,16 @@
+ 	int kr = 0;
+ 	int create_corpse = FALSE;
+ 
++#if defined(ARM64_BOARD_CONFIG_SWEET)
++    if (strcmp(p->p_name, "lsd") == 0 || strcmp(p->p_name, "cfprefsd") == 0 ||
++        strcmp(p->p_name, "installd") == 0) {
++        os_reason_t why = p->p_exit_reason;
++        printf("BERYLLIUM exit: %s[%d] signal=%d status=%d reason_ns=%u code=0x%llx\n",
++            p->p_name, proc_getpid(p), WTERMSIG(rv), WEXITSTATUS(rv),
++            why ? why->osr_namespace : 0, why ? why->osr_code : 0ULL);
++    }
++#endif
++
+ 	if (p->p_crash_behavior != 0 || p == initproc) {
+ 		proc_handle_critical_exit(p, rv);
+ 	}
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -7414,6 +7414,10 @@
+ #if defined(ARM64_BOARD_CONFIG_SWEET)
+ 			/* SWEET runs every iOS binary this way: one short line per exec. */
+ 			printf("exec %s\n", p->p_name);
++            if (strcmp(p->p_name, "lsd") == 0 || strcmp(p->p_name, "cfprefsd") == 0 ||
++                strcmp(p->p_name, "installd") == 0) {
++                printf("BERYLLIUM exec-attempt: %s[%d]\n", p->p_name, proc_getpid(p));
++            }
+ #else
+ 			printf("Allowing spawn of iOS binary %s since it has "
+ 			    "com.apple.private.security.no-sandbox entitlement or unentitled_ios_sim_launch "

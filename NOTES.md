@@ -1,5 +1,18 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## EXPLICIT SERVICE CENSUS DIAGNOSTIC — 2026-10-22
+
+- Repeated screen snapshots resolve SpringBoard main thread to LaunchServices
+  database XPC wait; lsd-side state still unproven. User authorizes next diagnostic.
+- Added target-only0086: before stack walks, enumerate launchd/seputil/keybagd/
+  lsd/cfprefsd/installd/SpringBoard/backboardd counts + first PID, explicitly0
+  if absent. Two separate process passes; counts snapshot does not prove absence
+  throughout interval. Added lsd/cfprefsd/installd exec-attempt PID and exit
+  signal/status/reason namespace/code logs. No forced process starts, policy changes,
+  raw storage logging or memory-window changes. Existing sampler cadence retained.
+- All Poco overlays0082–0086 apply sequentially with git apply. Need actual kernel
+  build before boot. No new image launched yet; current phone boot remains running.
+
 ## THIRD SAMPLE CONFIRMS SAME LAUNCHSERVICES WAIT — 2026-10-22
 
 - Photo20:36:27 SpringBoard26 slide0x47470000, mh0x1025b0000. Exact readable
