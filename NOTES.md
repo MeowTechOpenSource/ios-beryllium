@@ -1,5 +1,14 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## OFFLINE FOLLOW-UP / GRAPHICS FIX RETRY — 2026-10-22
+
+- Initial0084 QEMU regression passes explicitPID1+heartbeat. Pattern run shows actualBGRA bars and patternresult0, but console overwrites rows; strictpixelcheck correctly exits4. Do not call that fullpatternpass.
+- Correctingdiagnostic: set sweet_console_muted1 onopt-in, and respectmuting in fbcon_transmit_data for kprintf too, with panic_active escape. First correctedCI39719449716 failed because zero-context diffinsertion wasmisappliedoutsidefunction by CIgitapply. Restoredcontextualhunks, .gitattributes disablesnestedpatchwhitespacechecks, and verifiedALLoverlayswithgitapply (not patch) plus guardinsideactualfunction. Repairedcommit852e631, kernelCI39720237145 currentlybuilding. Duplicate39719372934 canceled beforefix. Mustverifyresult/screenshotnewkernelbeforeclaimingfullpatternpass.
+- HTCcontrol negotiation nowimplemented andtested: RESET→READYcredits→CONNECT_SERVICE→BOUND withmatchingservice/endpointlimits, repeatREADYandmalformedmessagesrejected, firmwarefailureallowretry. APRfinalresponse token+opcode checked; all20kmalformedtestsASan/UBSan andARM64freestandingcompilepass. Commitaf027ac. These modulesstillnotfirmware-bounddrivers.
+- Offlineflashfixprepared: streamingmkandroidsparse.py RAW/FILL only (noDONT_CARE), bounded4MiB RAWbuffer, verifiesexpandedSHA. 3unittests pass andCI39719721702 passesincludingsparse/display/transport/loader. Preparedresearch/ios-root/ios16-root-final.simg raw17179869184bytes,28209chunks, expandedSHAidenticaldc915ea4e2d2e51a42b86853d33b4e55f0ed9473330f8344cacd2ed9fdd2f0f5. IndependentAOSPsimg_dump accepts4194304blocks. No newphonewrites.
+- AOSPfastbootcopy_avb_footer readsentireNONsparsefileintostringandemitsexactFailedreadingfromuserdata; skipsforSPARSE. Likelycauseidentified, notconfirmedlocalsourceversionorcureuntilfutureflash. Relevantpinnedsourceinfo/doclinksindocs/BERYLLIUM_BRINGUP.md. Downloadedresearch/fastboot-main.cpp,simg_dump.py ignoredprivatework.
+
+
 ## OFFLINE POCO PORTING — 2026-10-22
 
 - User now has no device available and requests emulator work plus Wi-Fi/sound/graphics and device-specific what-works. No further hardware operations performed. Prior flash actually failed on host with "Failed reading from userdata" before any reported send/write; no completed userdata installation. Android ADB had returned before that attempt, bootloader reverified. Do not claim flash success.
