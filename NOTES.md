@@ -1,5 +1,60 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## USB SNAPSHOT/LOGS COLLECTED / CLEAN BASELINE BOOT — 2026-10-22
+
+- Complete private read-only16GiB snapshot poco-current-root-0086.img captured
+  in566.5s at29MiB/s; exactbytes17179869184, SHA in adjacentJSON. Phone unchanged.
+  Snapshot .img + JSON + logs MUST NOT enter git. Capture script/progress private.
+- Readonlymount refused. No-repair fsck printed rawdevicepermissionwarning then
+  structures/volume appearsOK; standalone exitcode not isolated, don't claim fully
+  validated or damaged filesystem. Mounted via LOCAL .shadow at tmp/poco-current-root;
+  base snapshot untouched, journal/recovery writes confined to shadow. Remounted
+  ownershipoff forreading protectedlogs (don'tinfer actualUIDs from thismount).
+- Copied actual launchd.log/log.1/log.2 plus diagnostictracev3 to ignored
+  research/ios-root/current-device-logs. /usr/bin/log show --directory with
+  start1969-12-30/end1971-01-01 yields57863lines current-unified-all.txt.
+  Processnamefilter initially0 because UUIDmetadata missing; many formatstrings
+  composefailureUUID/sharedUUID. Keeprawtraces; no public upload.
+- Concrete launchd.log.1 and.2: SpringBoard26 successfullyspawned; user501 lsd97
+  successfullyspawned due IPC, markedrunning/INIT. No lsdexit in savedtext. lsd
+  emits FileURL/containermanager/MobileGestalt UUID-only events in unifiedstore.
+  Thus lsd DOESstart in UIstageboots; earlier census0 onlyearlyboot wasmisleading.
+  Actual lsddbdirectoryempty. No proof yet whyservicefails toreply.
+- Active launchd.log ends sysstatuscheck, unlikepreviousrotatedUIstagebootlogs;
+  no proof censuskernelchange versus variabletiming is exact cause. Don'tkeep
+  asking task photos; instrumented sampler holds tasklock across usermemoryreads,
+  which can perturb/block. Removedsamplerforcontrolledbaseline, notclaimedfix.
+- Prepared0084c earlierkernel with sameADT/RAM/filesystem and startupflags,
+  sweetlog0, sweetsample=-, sweetiolog=-, sweetfb_noconsole1. Payloadguardpasses.
+  boot-ios-baseline-clean.img SHA256
+  834f49ce931b45f959f1995f5e648af68d1c0756d0cde51d385df8259fd9b8fd.
+- RecoveryADBproductverified; rebootbootloader, productberylliumreverified,
+  temporaryboot sendOKAY0.387s / bootOKAY0.073s total0.462s exit0. No reflash.
+  Awaitscreen2–3min. Currentphone nowbaselineboot, notinrecovery. Localsnapshot
+  mountedshadowforanalysis; originalimage/cachemountsstilllocalread-only.
+
+## SWITCH TO USB FILESYSTEM/LOG CAPTURE — 2026-10-22
+
+- User objects diagnostics appear worse than precompile and authorizes USB log
+  collection. New census photo shows launchd1 only, other watchedtasks0 after
+  exec sysstatuscheck. Not evidence of lsd failure. Exact newkernel regression
+  vs startup variability unknown; stop adding task names/repeated photo requests.
+- Running XNU exposes no ADB/fastboot (USBdriverdisabled). User returnedFASTBOOT;
+  verified productberyllium and knownTWRP hash, temporary recovery boot succeeded
+  send0.904s / boot0.073s total0.981s. Recovery root/TWRP/product verified.
+- Read-only snapshot capture underway: research/ios-root/capture-current.py
+  reads ONLY first16GiB of userdata to poco-current-root-0086.img.part, validates
+  HFS signature and declared16GiB filesystem size; streamsSHA/progress, atomic
+  rename only at expectedsize+successfulADBexit. No device writes/reflash.
+  Physical userdata size0x1c457fb000 reverified. Latestprogress9GiB/~29MiB/s.
+- Original preparedimage mounted READONLY -owners on at /private/tmp/poco-original-root.
+  Important: default ownersoff presents501:20 for all files; do not diagnose
+  ownership from that. Withownerson lsd/cfprefsdbinaries0:0 0755, vardb/lsd501:501
+  0755, mobilecaches501:501 0700. OriginalmigrationLastSystemVersion20H392 present.
+- Need finishcapture, mountsnapshotreadonly, inspect actual diagnosticlogs/crashes,
+  launchd service state and LSdatabase. No restore/rollback until findings assessed.
+  Snapshot/logs are private and MUST NOT enterpublicgit.
+
 ## CENSUS KERNEL BUILT / IMAGE READY — 2026-10-22
 
 - CI39781037924 succeeded from820ff80; artifact metadata targetberyllium/source
