@@ -1,0 +1,26 @@
+name: beryllium-support
+on:
+  push:
+    branches: [poco-bringup]
+    paths:
+      - 'ports/beryllium/support/**'
+      - 'tools/test-beryllium-*'
+      - '.github/workflows/beryllium-checks.yml'
+  workflow_dispatch:
+jobs:
+  portable-support:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Display geometry and guarded pattern
+        run: |
+          clang -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined tools/test-beryllium-display.c -o /tmp/beryllium-display
+          /tmp/beryllium-display
+      - name: HTC and APR wire fixtures and malformed inputs
+        run: |
+          clang -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined ports/beryllium/support/transport.c tools/test-beryllium-transport.c -o /tmp/beryllium-transport
+          /tmp/beryllium-transport
+      - name: Loader guards
+        run: |
+          python3 tools/test-beryllium-fdt.py
+          python3 tools/test-beryllium-payload.py

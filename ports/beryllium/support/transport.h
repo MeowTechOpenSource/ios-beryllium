@@ -23,6 +23,9 @@ struct beryllium_apr {
     size_t payload_size;
 };
 int beryllium_apr_decode(const void *, size_t, struct beryllium_apr *);
+/* Accept only a final BASIC_RSP_RESULT for this token and original command. */
+int beryllium_apr_result(const void *, size_t, uint32_t token,
+                        uint32_t command, uint32_t *status);
 /* Emits APR v0, 20-byte header, followed by payload. Returns 0 on rejection. */
 size_t beryllium_apr_encode(void *, size_t, const struct beryllium_apr *);
 #ifdef __cplusplus

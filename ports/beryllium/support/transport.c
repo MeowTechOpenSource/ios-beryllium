@@ -43,3 +43,14 @@ size_t beryllium_apr_encode(void *data, size_t n, const struct beryllium_apr *m)
     for (size_t i=0;i<m->payload_size;i++) p[20+i]=m->payload[i];
     return 20+m->payload_size;
 }
+
+int beryllium_apr_result(const void *data, size_t n, uint32_t token,
+                        uint32_t command, uint32_t *status)
+{
+    struct beryllium_apr m;
+    if (!status || beryllium_apr_decode(data,n,&m) || m.type!=1 ||
+        m.token!=token || m.opcode!=0x000110e8 || m.payload_size!=8 ||
+        get32(m.payload)!=command) return -1;
+    *status=get32(m.payload+4);
+    return 0;
+}

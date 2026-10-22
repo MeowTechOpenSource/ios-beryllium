@@ -26,5 +26,22 @@ int main(void) {
     assert(decoded.token==m.token && decoded.opcode==m.opcode && decoded.payload_size==4);
     frame[0]|=1; assert(beryllium_apr_decode(frame,24,&decoded)<0); frame[0]&=~1;
     frame[1]|=4; assert(beryllium_apr_decode(frame,24,&decoded)<0);
+    unsigned char response[]={0x88,0x77,0x66,0x55,0,0,0,0};
+    m.type=1; m.opcode=0x110e8; m.payload=response; m.payload_size=8;
+    assert(beryllium_apr_encode(frame,32,&m)==28);
+    uint32_t status=0xdeadbeef;
+    assert(!beryllium_apr_result(frame,28,m.token,0x55667788,&status) && status==0);
+    assert(beryllium_apr_result(frame,28,m.token+1,0x55667788,&status)<0);
+    assert(beryllium_apr_result(frame,28,m.token,1,&status)<0);
+    m.opcode=0x100be; assert(beryllium_apr_encode(frame,32,&m)==28);
+    assert(beryllium_apr_result(frame,28,m.token,0x55667788,&status)<0);
+    /* Deterministic malformed input sweep under ASan/UBSan. */
+    unsigned char fuzz[4097]; uint32_t seed=1;
+    for (unsigned t=0;t<20000;t++) {
+        seed=seed*1664525u+1013904223u; size_t n=seed%sizeof(fuzz);
+        for (size_t i=0;i<n;i++) { seed=seed*1664525u+1013904223u; fuzz[i]=(unsigned char)(seed>>24); }
+        (void)beryllium_htc_decode(fuzz,n,&rx);
+        (void)beryllium_apr_decode(fuzz,n,&decoded);
+    }
     puts("HTC RX / APR framing: wire fixtures, truncations, unaligned buffers and canaries passed");
 }

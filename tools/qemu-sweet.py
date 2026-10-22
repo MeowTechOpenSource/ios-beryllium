@@ -61,7 +61,7 @@ def check_qemu_dependency(cpu='cortex-a76'):
 def check_kernel_tools(kernel_path):
     """Verify llvm-nm is available when --kernel is specified."""
     if not (shutil.which('llvm-nm') or shutil.which('xcrun')):
-        print('[!] Error: llvm-nm not found in PATH, required for --kernel font extraction.', file=sys.stderr)
+        print('[!] Error: llvm-nm or xcrun required for --kernel font extraction.', file=sys.stderr)
         print('    Install instructions:', file=sys.stderr)
         print('      Arch Linux:    sudo pacman -S llvm', file=sys.stderr)
         print('      Ubuntu/Debian: sudo apt install llvm', file=sys.stderr)
@@ -232,8 +232,7 @@ def main():
     ap.add_argument('--check-env', action='store_true', help='check QEMU installation and dependencies without running a payload')
     a = ap.parse_args()
     global FB_BASE, FB_H
-    if a.profile == 'beryllium':
-        FB_BASE, FB_H = 0x9d400000, 2246
+    FB_BASE, FB_H = (0x9d400000, 2246) if a.profile == 'beryllium' else (0x9c000000, 2400)
 
     if a.check_env:
         ok = check_qemu_dependency(a.cpu)
