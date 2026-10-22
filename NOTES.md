@@ -10,7 +10,9 @@
   SHA256 4f64756cf23de6f68b0b2946bd3f4755a9333dd295a5fb525c0b2af263697501.
 - User reports in fastboot, but fastboot count0, ADB empty and current USB host
   inventory empty. Image NOT sent. Need USB data path restored, verify beryllium,
-  then temporary boot only. sweetlog remains0; no userdata reflash.
+  Reconnection succeeded: product beryllium/checksum verified; send OKAY0.395s,
+  Booting OKAY0.073s, total0.470s exit0. Await launchd/seputil sampler photos
+  after ~2min. sweetlog remains0; no userdata reflash.
 
 ## SPRINGBOARD CONFIRMED / LAUNCHSERVICES WAIT SYMBOLICATED — 2026-10-22
 
