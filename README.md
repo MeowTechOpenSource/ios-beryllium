@@ -13,7 +13,7 @@ SpringBoard and an interactive iOS UI have not yet been demonstrated.** Upstream
 | Boot | Temporary boot through the unlocked bootloader; EL1 entry and 16K-page support verified. |
 | CPU / memory | Kryo 385 driver matching; single-CPU diagnostic userspace on hardware. Five RAM samples restored successfully in the approved 256 MiB window. |
 | Display | Physical boot console at 1080×2246, stride 4320, framebuffer `0x9d400000`. Updated CPU-rendered bars pass every-pixel checks in QEMU; that update awaits hardware testing. |
-| UFS | Read-only root probe reached an unknown-volume-signature report on existing Android storage. Prepared iOS filesystem flashed to userdata; XNU mount/launchd result pending. |
+| UFS | Read-only root probe reached an unknown-volume-signature report on existing Android storage. HFS PocoIOSRoot mounted read-write; Apple launchd runs. Startup currently stops after exec mount. |
 | Wi-Fi / audio | Tested portable HTC/APR protocol foundations; hardware transport and functional drivers remain unfinished. |
 | GPU | CPU framebuffer only; no Adreno 630 acceleration. |
 | Touch / keys / USB | Physical XNU drivers disabled. Android/recovery USB support does not establish XNU USB support. |

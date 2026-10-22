@@ -1,5 +1,36 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## FULL LOG RECOVERED / LOGGER ISOLATION TEST — 2026-10-22
+
+- Temporary TWRP boot succeeded (send 0.907s / boot 0.073s). Recovery ADB root
+  and product beryllium verified. Read ONLY final 1025 blocks of userdata.
+  Actual recovery block size 0x1c457fb000, 16 KiB above fastboot usable size
+  0x1c457f7000. First size guard stopped before reading; then verified actual
+  size and recovered valid SWEETLOG header at physical partition end.
+- Private research/ios-root/poco-launchd-cache-log.{bin,txt}: ring 4 MiB,
+  total 14826 bytes, flush 2. Confirms BSD root ufsroot0 and HFS mounted
+  PocoIOSRoot, actual Apple launchd hello/version, mount-phase-1 then exec mount.
+  Final saved line SMP --- sample 0 indicates kernel scheduled a later sampler;
+  no subsequent panic captured. No proof of exact deadlock/blocked thread yet.
+- Next controlled temporary test changes ONLY sweetlog=1 to sweetlog=0, disabling
+  raw partition-tail logger I/O. Does not establish logger is cause. All other
+  payload bytes identical. boot-ios-nolog.img SHA256
+  75fdab4995645adbb0b2d079fb654ce0f7194bc791bd175e9c587036d154ab7c.
+- Rebooted recovery into fastboot via ADB, product beryllium verified, temporary
+  boot send OKAY 0.390s / Booting OKAY 0.072s, total 0.464s exit 0.
+  Await user screen after minute. Logging OFF for this boot; don't mistakenly
+  read old persistent ring as its new result. No reflash/storage-image edit.
+
+## LAUNCHD SCREEN UNCHANGED / NEED FULL LOG — 2026-10-22
+
+- Follow-up photo ~one minute later is unchanged: newest visible boot task
+  mount-phase-1 / exec mount; no new visible panic. Do not infer trust-cache
+  warnings caused the wait or call boot complete. Console is circular.
+- Current cmdline enables sweetlog=1. Next recover persistent log read-only from
+  final 1025 x 4096-byte blocks of userdata via temporary known TWRP, decode
+  tools/sweet-log.py. User asked to return FASTBOOT; await visibility/identity.
+  Do not reflash userdata or alter mounted filesystem to guess a fix.
+
 ## APPLE LAUNCHD RUNNING ON PHYSICAL POCO — 2026-10-22
 
 - User photo after boot-ios-cache.img shows actual Apple launchd PID 1, hello,
