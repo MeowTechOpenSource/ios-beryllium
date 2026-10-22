@@ -1,5 +1,20 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## LATER SAMPLE: SPRINGBOARD STILL IN LAUNCHSERVICES — 2026-10-22
+
+- User photo20:14:33 from continuing boot now includes cfprefsd[92],
+  SpringBoard[26], backboardd and launchd; it advanced beyond keybagd without
+  booting prepared keybag diagnostic. Don't reboot solely for earlier keybag wait.
+- SpringBoard slide0x193e8000: t0 pc1db9f9030 -> mach_msg2_trap+8;
+  NSXPC invocation frames, LSContextInitCommon+512, LSContextInitWithOptions+12,
+  LaunchServices::Database::Context::_get+108 resolve in matching cache. This
+  repeats prior LaunchServices XPC wait across later sample, not a new UI frame.
+- Private transcription/lookups research/ios-root/poco-ui-photo-201433-symbols.txt.
+  Some smaller thread addresses manually read from photo remain uncertain; avoid
+  inferring cfprefsd root cause from nearest-symbol result alone. Need SMP lsd
+  header/stacks in same current boot (already in sampler list), and any lsd crash.
+  Prepared boot-ios-keybag.img has NOT been launched; no need unless boot regresses.
+
 ## CURRENT BOOT ADVANCES TO KEYBAGD / LAUNCHD WAIT4 — 2026-10-22
 
 - User photo confirms corecrypto FIPS POST all tests PASSED (176ms), followed by
