@@ -9,7 +9,9 @@
   sweetsample=launchd,mobile_obliterator to no-logger payload. Production C guard
   passes; other payload bytes identical. SHA256
   09e95ed015968cb43c133595b754e20f37e72aa57f301a1f8ed4894495c10b81.
-- Await FASTBOOT, verify product then temporary boot. First sample is ~90s
+- User returned FASTBOOT; product beryllium and image SHA256 verified. Temporary
+  boot send OKAY 0.395s, Booting OKAY 0.073s, total 0.470s, exit 0.
+  Await sampler photo; first sample is ~90s
   after kernel sampler start, next every 120s. Request photo including SMP pc/lr/bt
   and slide lines, not only the sample heading. sweetlog remains 0; old persisted
   ring must not be mistaken for current run. No filesystem reflash.
