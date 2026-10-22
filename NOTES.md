@@ -1,5 +1,18 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## APPLE LAUNCHD RUNNING ON PHYSICAL POCO — 2026-10-22
+
+- User photo after boot-ios-cache.img shows actual Apple launchd PID 1, hello,
+  Darwin Bootstrapper Version 7.0.0 / libxpc executable version and full boot args
+  including unentitled_ios_sim_launch=1 launchd_unsecure_cache=1. Boot tasks and
+  exec mount visible. This establishes Apple userland execution on the Poco,
+  beyond the earlier static diagnostic. No SpringBoard or interactive UI yet.
+- Many dyld_shared_cache_arm64 subcache messages say not in trust cache; launchd
+  nevertheless prints later startup output. Also opt into 50 MB Jetsam high
+  watermark: 22 Invalid argument. Neither is proven fatal from this still photo.
+- Leave phone running and obtain latest screen after about one minute; do not
+  restart solely for those warnings. Current kernel window still 255 MiB usable.
+
 ## APPLE STARTUP PROGRESSES TO CACHE LOADER — 2026-10-22
 
 - New user photo is NOT the earlier platform rejection: panicked process is

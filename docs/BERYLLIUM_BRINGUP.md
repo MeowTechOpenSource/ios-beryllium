@@ -92,3 +92,11 @@ The physical boot attempted Apple launchd but panicked with `OS_REASON_EXEC` (9)
 kernel needs `unentitled_ios_sim_launch=1` for this iOS executable. The corrected
 temporary payload changes that argument only and has been accepted by fastboot;
 the next photo confirms Apple startup reached `launchd_cache_loader` PID 22. It then exits with namespace 7 / subcode 1, `Unable to find AMFI`. The next temporary image adds `launchd_unsecure_cache=1`, matching the recorded upstream development path. No UI is confirmed.
+
+## Apple launchd confirmed on Poco
+
+The next physical screen confirms Apple launchd PID 1 prints its hello, version
+and boot arguments and starts boot tasks. Both development arguments are present.
+Trust-cache warnings remain visible but later launchd output follows them; they
+are not proven fatal by that photo. Leave this boot running and inspect its next
+output before changing anything. SpringBoard/UI remain unconfirmed.
