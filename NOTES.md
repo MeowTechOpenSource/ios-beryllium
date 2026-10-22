@@ -13,7 +13,8 @@
 - Prepared boot-ios-cache.img adding ONLY launchd_unsecure_cache=1 to prior payload;
   all non-commandline payload bytes identical; production bounds guard passed.
   SHA256 15b58a14b932a4b30e559c2c81f064a1c7537d35f3c0e8dd0b9f272e3be3ae30.
-  Await FASTBOOT before temporary boot; no new userdata flash needed.
+  FASTBOOT/product beryllium verified; temporary send OKAY 0.393s, Booting OKAY
+  0.073s, total 0.467s, exit 0. Await new screen. No new userdata flash.
 
 ## APPLE LAUNCHD EXEC PLATFORM REJECTION / RETRY — 2026-10-22
 
