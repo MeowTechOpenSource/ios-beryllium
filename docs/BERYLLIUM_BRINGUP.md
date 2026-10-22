@@ -57,3 +57,17 @@ authorization. Keep bootloaders, recovery, modem and persist intact.
 With the 0084 kernel and `beryllium_fbtest=1` in the payload command line, run the
 wrapper with `--expect-pattern` (without text expectations) to check band colors
 and the panel border directly. Missing expectations return exit code 4.
+
+## Prepared sparse installation image (no phone required)
+
+`tools/mkandroidsparse.py` streams RAW/FILL chunks and verifies the expanded SHA256.
+It never emits undefined DONT_CARE regions and never invokes fastboot. This avoids
+loading the raw 16GiB image in memory during conversion. The prepared sparse image
+has the same expanded SHA256 as the validated HFS image. AOSP's independent
+`simg_dump.py` accepts its 4,194,304 output blocks and 28,209 chunks.
+
+The [AOSP AVB-footer copy path](https://android.googlesource.com/platform/system/core/+/refs/heads/main/fastboot/fastboot.cpp)
+reads a non-sparse image into a string and produces the observed error text when
+that fails; it skips that path for sparse files. This explains a likely host-side
+cause, but a successful future device flash is still needed to confirm resolution.
+The sparse format is checked against [AOSP sparse_format.h](https://android.googlesource.com/platform/system/core/+/refs/heads/main/libsparse/sparse_format.h).
