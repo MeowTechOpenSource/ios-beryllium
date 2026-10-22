@@ -1,5 +1,15 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## CACHE CANDIDATE HARDWARE TEST LAUNCHED — 2026-10-22
+
+- Full bootloader restart resolved the post-flash USB stall. Product beryllium
+  verified again. Baseline-clean image hash reverified, temporary fastboot boot
+  accepted: send0.394s, boot0.073s, total0.468s, exit0.
+- Installed filesystem is the single ExtensionKit flag candidate documented below.
+  No further userdata flash or other partition writes. No stack sampler.
+- Await actual screen progress after2–3minutes. Bootloader acceptance alone is
+  NOT proof of XNU startup, ExtensionKit fallback success, or working iOS UI.
+
 ## EXTENSIONKIT CANDIDATE INSTALLATION IN PROGRESS — 2026-10-22
 
 - User explicitly instructed “now run”. Created a fresh APFS clone of immutable
@@ -17,6 +27,9 @@
   Log research/ios-root/flash-extension-cache-test.log. After flash, product
   query timed out10s before boot command was issued. No temporary boot sent.
   User asked to reconnect USB while in FASTBOOT; do NOT repeat userdata flash.
+  Reconnection reported, but getvar still times out. ioreg sees Android behind
+  USB2.1 hub; no competing fastboot process. adb kill-server did not fix it.
+  Requested full Power+VolDown bootloader restart, then reconnect. No boot sent.
 - Next temporary boot: boot-ios-baseline-clean.img, SHA834f49ce931b45f959f1995f5e648af68d1c0756d0cde51d385df8259fd9b8fd.
   No sampler, no new kernel. Candidate is not yet a confirmed UI fix.
 
