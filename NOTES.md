@@ -1,5 +1,21 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## CURRENT BOOT ADVANCES TO KEYBAGD / LAUNCHD WAIT4 — 2026-10-22
+
+- User photo confirms corecrypto FIPS POST all tests PASSED (176ms), followed by
+  keybag boot task / exec keybagd. No fatal keybag error captured. Earlier user
+  phrase I have nothing to do Goodbye is from MSUEarlyBootTask, not seputil;
+  corrected attribution. Circular console bottom includes older boot tasks.
+- Latest photo SMP launchd[1] slide0x193e8000, mh0x102e84000. Readable t0 PC
+  0x1db9fe178 resolves using matching cache to _wait4+8 (0x1c2616178 unslid).
+  Parent waiting for child completion, consistent with latest exec keybagd.
+  Do not claim deadlock or fatal keybag failure from parent stack alone.
+- Existing list omitted keybagd. Prepared same 0084c payload with keybagd added
+  alongside launchd/seputil/UI/lsd/preferences/install targets; unchanged other
+  bytes, production guard passed. boot-ios-keybag.img SHA256
+  dd977ff1cba74e10f9c191dde3d0191727349018feb0eb6b34b9ffe2d9730392.
+  Await FASTBOOT or report boot advanced. No new userdata flash.
+
 ## EARLIER SEPUTIL WAIT / NEXT DIAGNOSTIC — 2026-10-22
 
 - User's latest lsd-diagnostic photo stops at data-protection / exec seputil;
