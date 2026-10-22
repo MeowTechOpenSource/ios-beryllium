@@ -10,6 +10,5 @@
 - Device bring-up uses temporary `fastboot boot` images. This user explicitly
   authorized formatting/writing `userdata` for iOS on 2026-10-22. Preserve GPT,
   bootloaders, recovery, modem, persist and private partition backups. Do not
-  extend that authorization to other partitions. The phone is currently away;
-  continue offline work without device operations until it returns.
+  extend that authorization to other partitions. The phone returned on 2026-10-22; verify its identity/mode before device operations.
 - Keep device dumps, serial numbers and downloaded Apple artifacts out of git.

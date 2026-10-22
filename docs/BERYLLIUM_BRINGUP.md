@@ -47,11 +47,12 @@ to Wi-Fi firmware transport or audio hardware.
 
 ## Installation state
 
-The user explicitly authorized userdata formatting/writes on 2026-10-22. Prepared
-local HFS image ownership and read-only filesystem checks pass. The first flash
-attempt failed on the host (`Failed reading from userdata`) before a reported
-send/write. No completed flash exists. The user then requested offline work because
-the phone is unavailable. Keep hardware operations stopped until it returns.
+The user explicitly authorized userdata formatting/writes on 2026-10-22. The
+prepared 16 GiB image's full sparse expansion was reverified against its expected
+SHA256. On the device's return, fastboot confirmed beryllium/unlocked and the
+expected userdata capacity. All 15 sparse chunks sent/wrote OKAY, exit 0 in
+362.191 seconds. This supersedes the earlier host-side failed raw-image attempt.
+Temporary boot transfer failed with a USB read error; reconnect is needed; XNU mount and Apple launchd/UI remain unconfirmed.
 
 Private FDTs, partition backups, Apple firmware, images, serials and credentials
 remain outside git. Upstream historical permissions are not used as this user's

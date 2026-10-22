@@ -14,7 +14,7 @@ been demonstrated.** Upstream Redmi screenshots and milestones are not Poco resu
 | Boot | Temporary boot through the unlocked bootloader; EL1 entry and 16K-page support verified. |
 | CPU / memory | Kryo 385 driver matching; single-CPU diagnostic userspace on hardware. Five RAM samples restored successfully in the approved 256 MiB window. |
 | Display | Physical boot console at 1080×2246, stride 4320, framebuffer `0x9d400000`. Updated CPU-rendered bars pass every-pixel checks in QEMU; that update awaits hardware testing. |
-| UFS | Read-only root probe reached an unknown-volume-signature report on existing Android storage. No successful iOS filesystem mount or completed userdata installation. |
+| UFS | Read-only root probe reached an unknown-volume-signature report on existing Android storage. Prepared iOS filesystem flashed to userdata; XNU mount/launchd result pending. |
 | Wi-Fi / audio | Tested portable HTC/APR protocol foundations; hardware transport and functional drivers remain unfinished. |
 | GPU | CPU framebuffer only; no Adreno 630 acceleration. |
 | Touch / keys / USB | Physical XNU drivers disabled. Android/recovery USB support does not establish XNU USB support. |
@@ -71,11 +71,11 @@ a renamed log does not certify new hardware functionality.
 
 ## Installation state
 
-A local iOS filesystem and an exact verified Android sparse image are prepared.
-The first host flash attempt failed before any reported transfer/write; no
-completed installation is claimed. Userdata writes are authorized for this phone,
-but device operations are paused while it is unavailable. Preserve GPT,
-bootloaders, recovery, modem, persist and private backups.
+The verified 16 GiB iOS filesystem sparse image was flashed to the Poco's userdata
+on 2026-10-22: all 15 sends/writes reported `OKAY`, and fastboot exited successfully.
+Temporary boot transfer failed with a USB read error; reconnect is needed; a successful flash does not establish
+an XNU filesystem mount, Apple launchd or iOS UI. GPT, bootloaders, recovery, modem,
+persist and private backups were preserved.
 
 Device trees captured from the phone, backups, serials, credentials and Apple
 firmware/filesystem images are excluded from this repository. iOS is Apple's

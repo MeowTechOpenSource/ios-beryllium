@@ -1,5 +1,23 @@
 # XNU / iOS on Poco F1 (beryllium, SDM845) — working notes
 
+## DEVICE RETURNED / USERDATA FLASH SUCCEEDED — 2026-10-22
+
+- ADB identified POCO F1 / beryllium; rebooted to bootloader. Fastboot product
+  beryllium, unlocked yes, userdata size 0x1c457f7000 and type f2fs verified.
+- Reverified COMPLETE sparse expansion: 17179869184 bytes, SHA256
+  dc915ea4e2d2e51a42b86853d33b4e55f0ed9473330f8344cacd2ed9fdd2f0f5.
+- Executed authorized fastboot flash userdata ios16-root-final.simg: ALL 15 chunks
+  sent and written OKAY; exit 0, 362.191 seconds. Chunk 2 took 102.233 seconds but
+  resumed without intervention. Private full log research/ios-root/flash-userdata-2026-10-22.log.
+  This supersedes earlier failed-host-transfer status. No other partition flashed.
+- Temporary fastboot boot boot-ios.img initiated. SHA256 still matches
+  1535e9adb495b78736af842146496e2e7d5a85aaf7aeb1c8a9e498dbaa6d92be.
+  Transfer FAILED usb_read status e00002ed, exit 1, before any Booting OKAY.
+  Fastboot disappeared. User reports reconnect/FASTBOOT, but bounded fastboot,
+  ADB and IOUSBHostDevice inventory still empty. Need physical USB path restored;
+  do not reflash userdata. Retry temporary boot ONLY after identity is visible.
+  Apple launchd/UI not confirmed.
+
 ## BERYLLIUM NAMING — 2026-10-22
 
 - Replaced upstream Redmi front-page claims with Poco-specific evidence and limitations.
