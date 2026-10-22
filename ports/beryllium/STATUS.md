@@ -11,7 +11,7 @@ This is an XNU/iOS port. Linux driver support is a reference, not an XNU driver.
 | Display console | Actual 1080×2246 console at 0x9d400000 | Poco early-console overlay and matching QEMU framebuffer. |
 | IOSurface / display service | AppleCLCD and IOCoreSurfaceRoot registration observed | Existing CPU compositor; no hardware proof of iOS frames or swaps. Opt-in test pattern and geometry correction in 0084. |
 | Adreno 630 acceleration | None | No XNU GPU driver. Requires GMU, firmware/secure setup, power, IOMMU, command submission and an iOS graphics frontend. |
-| Wi-Fi WCN3990 | None under XNU | Bounded HTC RX wire codec tested. No SNOC/CE DMA, QMI/firmware boot, WMI/HTT, association or iOS network interface yet. |
+| Wi-Fi WCN3990 | None under XNU | HTC RX envelope and READY→CONNECT_SERVICE negotiation tested with wire fixtures. No SNOC/CE DMA, QMI/firmware boot, WMI/HTT, association or iOS network interface yet. |
 | Audio WCD9340 / ADSP | None under XNU | Bounded APR encode/decode tested. No GLINK/rpmsg, ADSP boot, AFE/ASM routing, SLIMbus codec or iOS audio service yet. Speaker amplifier/routing still needs target verification. |
 | UFS | Read-only root attempt reaches HFS signature failure on existing Android filesystem, per screen report | Target host map supplied; no successful userdata write or iOS HFS boot yet. |
 | Touch / physical keys | None under XNU | HID services register; physical Sweet drivers disabled. Poco geometry correction does not port its touch controller. |

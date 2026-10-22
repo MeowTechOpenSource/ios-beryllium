@@ -15,6 +15,18 @@ struct beryllium_htc_rx {
 };
 /* Input is one RX frame; trailing transfer padding is allowed. */
 int beryllium_htc_decode(const void *, size_t, struct beryllium_htc_rx *);
+enum beryllium_htc_state { BERYLLIUM_HTC_RESET, BERYLLIUM_HTC_READY,
+                            BERYLLIUM_HTC_CONNECTING, BERYLLIUM_HTC_BOUND };
+struct beryllium_htc_session {
+    enum beryllium_htc_state state;
+    uint16_t credits, credit_size, service, max_message;
+    uint8_t max_endpoints, endpoint;
+};
+/* Process endpoint-zero READY/CONNECT_RESPONSE frames. No actual bus I/O. */
+int beryllium_htc_control(struct beryllium_htc_session *, const void *, size_t);
+/* Emit the eight-byte CONNECT_SERVICE message payload, then await a response. */
+size_t beryllium_htc_connect(struct beryllium_htc_session *, uint16_t service,
+                            uint16_t flags, void *, size_t);
 struct beryllium_apr {
     uint8_t type, src_service, src_domain, dst_service, dst_domain;
     uint16_t src_port, dst_port;

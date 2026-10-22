@@ -3,7 +3,7 @@
 `transport.[ch]` implements HTC RX envelope validation for the WCN3990 Wi-Fi port
 and APR v0 packet encoding/decoding for the audio DSP port. These functions are
 freestanding, handle unaligned input without packed casts, and reject malformed
-lengths before exposing payloads. HTC accepts bus padding after the declared frame;
+lengths before exposing payloads. The HTC endpoint-zero negotiation state machine validates READY credits and CONNECT_SERVICE responses, including service/endpoint matching and retry after firmware rejection. Calls must be serialized by the future driver. HTC accepts bus padding after the declared frame;
 APR expects a single exact packet. Final audio command results are checked against both token and original opcode; an ACCEPTED response is not treated as completion. APR encoder input payload must not overlap its
 output buffer. Neither module is connected to a firmware or hardware transport yet.
 

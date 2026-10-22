@@ -54,3 +54,39 @@ int beryllium_apr_result(const void *data, size_t n, uint32_t token,
     *status=get32(m.payload+4);
     return 0;
 }
+
+int beryllium_htc_control(struct beryllium_htc_session *s, const void *data, size_t n)
+{
+    struct beryllium_htc_rx rx;
+    if (!s || beryllium_htc_decode(data,n,&rx) || rx.endpoint || rx.payload_size<8)
+        return -1;
+    const uint8_t *p=rx.payload;
+    uint16_t id=get16(p);
+    if (id==1 && s->state==BERYLLIUM_HTC_RESET) {
+        uint16_t credits=get16(p+2), size=get16(p+4);
+        if (!credits || !size || size>4096 || p[6]<2 || p[6]>9) return -1;
+        s->credits=credits; s->credit_size=size; s->max_endpoints=p[6];
+        s->service=0; s->endpoint=0; s->max_message=0;
+        s->state=BERYLLIUM_HTC_READY;
+        return 0;
+    }
+    if (id==3 && s->state==BERYLLIUM_HTC_CONNECTING) {
+        if (get16(p+2)!=s->service) return -1;
+        if (p[4]) { s->state=BERYLLIUM_HTC_READY; return -2; }
+        uint16_t maximum=get16(p+6);
+        if (!p[5] || p[5]>=s->max_endpoints || !maximum || maximum>4096) return -1;
+        s->endpoint=p[5]; s->max_message=maximum; s->state=BERYLLIUM_HTC_BOUND;
+        return 0;
+    }
+    return -1;
+}
+size_t beryllium_htc_connect(struct beryllium_htc_session *s, uint16_t service,
+                            uint16_t flags, void *data, size_t n)
+{
+    if (!s || s->state!=BERYLLIUM_HTC_READY || !service || (flags&0xf0) ||
+        (flags>>8)>s->credits || !data || n<8) return 0;
+    uint8_t *p=data;
+    put16(p,2); put16(p+2,service); put16(p+4,flags); put16(p+6,0);
+    s->service=service; s->state=BERYLLIUM_HTC_CONNECTING;
+    return 8;
+}

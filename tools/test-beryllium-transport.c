@@ -35,6 +35,24 @@ int main(void) {
     assert(beryllium_apr_result(frame,28,m.token,1,&status)<0);
     m.opcode=0x100be; assert(beryllium_apr_encode(frame,32,&m)==28);
     assert(beryllium_apr_result(frame,28,m.token,0x55667788,&status)<0);
+    struct beryllium_htc_session session={0};
+    unsigned char ready[]={0,0,8,0,0,0,0,0,1,0,8,0,0,1,9,0};
+    unsigned char request[8];
+    assert(!beryllium_htc_connect(&session,0x100,0,request,8));
+    assert(!beryllium_htc_control(&session,ready,sizeof(ready)));
+    assert(session.state==BERYLLIUM_HTC_READY && session.credits==8 && session.credit_size==256);
+    assert(beryllium_htc_control(&session,ready,sizeof(ready))<0); /* duplicate READY */
+    assert(!beryllium_htc_connect(&session,0x100,0x900,request,8)); /* over-allocation */
+    assert(!beryllium_htc_connect(&session,0x100,0,request,7));
+    assert(beryllium_htc_connect(&session,0x100,0,request,8)==8);
+    const unsigned char connect_expected[]={2,0,0,1,0,0,0,0};
+    assert(!memcmp(request,connect_expected,8));
+    unsigned char reply[]={0,0,8,0,0,0,0,0,3,0,0,1,0,2,0,4};
+    reply[10]=1; assert(beryllium_htc_control(&session,reply,sizeof(reply))<0); reply[10]=0;
+    assert(session.state==BERYLLIUM_HTC_CONNECTING);
+    reply[13]=9; assert(beryllium_htc_control(&session,reply,sizeof(reply))<0); reply[13]=2;
+    assert(!beryllium_htc_control(&session,reply,sizeof(reply)));
+    assert(session.state==BERYLLIUM_HTC_BOUND && session.endpoint==2 && session.max_message==1024);
     /* Deterministic malformed input sweep under ASan/UBSan. */
     unsigned char fuzz[4097]; uint32_t seed=1;
     for (unsigned t=0;t<20000;t++) {
